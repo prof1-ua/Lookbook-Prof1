@@ -5,9 +5,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin", "cyrillic"] });
 
 export const metadata: Metadata = {
-  title: "Lookbook Generator — AI фотосессия",
+  title: "PROF1GROUP Lookbook Generator",
   description:
-    "Создайте профессиональные фото для лукбука: загрузите одежду, выберите параметры модели и локацию.",
+    "Створіть професійне фото для лукбуку: завантажте одяг, оберіть параметри моделі та локацію.",
 };
 
 export default function RootLayout({

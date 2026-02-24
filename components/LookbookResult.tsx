@@ -50,7 +50,7 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDownload}
-          className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-medium transition-colors"
+          className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
         >
           <Download size={18} />
           Скачать фото
@@ -58,7 +58,7 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
 
         <button
           onClick={handleShare}
-          className="flex items-center justify-center gap-2 w-full py-3 px-6 border border-violet-200 text-violet-700 hover:bg-violet-50 rounded-xl font-medium transition-colors"
+          className="flex items-center justify-center gap-2 w-full py-3 px-6 border border-red-200 text-red-700 hover:bg-red-50 rounded-xl font-medium transition-colors"
         >
           <Share2 size={18} />
           Поделиться

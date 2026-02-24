@@ -77,7 +77,7 @@ export function GenerationProgress({ currentStep, message }: Props) {
               key={info.step}
               className={cn(
                 "flex items-start gap-4 p-4 rounded-xl transition-all duration-300",
-                isCurrent && "bg-violet-50 border border-violet-200 shadow-sm",
+                isCurrent && "bg-red-50 border border-red-200 shadow-sm",
                 isDone && "opacity-50",
                 isPending && "opacity-25"
               )}
@@ -86,7 +86,7 @@ export function GenerationProgress({ currentStep, message }: Props) {
                 className={cn(
                   "w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0",
                   isDone && "bg-green-100",
-                  isCurrent && "bg-violet-600 animate-pulse",
+                  isCurrent && "bg-red-600 animate-pulse",
                   isPending && "bg-gray-100"
                 )}
               >
@@ -96,7 +96,7 @@ export function GenerationProgress({ currentStep, message }: Props) {
                 <p
                   className={cn(
                     "text-sm font-semibold",
-                    isCurrent ? "text-violet-700" : isDone ? "text-green-700" : "text-gray-500"
+                    isCurrent ? "text-red-700" : isDone ? "text-green-700" : "text-gray-500"
                   )}
                 >
                   {info.label}
@@ -108,7 +108,7 @@ export function GenerationProgress({ currentStep, message }: Props) {
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-bounce"
+                      className="w-1.5 h-1.5 rounded-full bg-red-500 animate-bounce"
                       style={{ animationDelay: `${i * 0.15}s` }}
                     />
                   ))}
@@ -123,7 +123,7 @@ export function GenerationProgress({ currentStep, message }: Props) {
       <div className="space-y-1.5">
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-violet-500 to-purple-600 rounded-full transition-all duration-700"
+            className="h-full bg-gradient-to-r from-red-600 to-red-700 rounded-full transition-all duration-700"
             style={{
               width:
                 currentIndex === -1

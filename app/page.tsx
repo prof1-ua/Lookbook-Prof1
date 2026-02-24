@@ -2,32 +2,40 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-lg space-y-6">
-        {/* Logo / Hero */}
-        <div className="text-6xl mb-2">✨</div>
-        <h1 className="text-4xl font-bold text-gray-900">
-          Lookbook Generator
-        </h1>
-        <p className="text-lg text-gray-600">
-          Создайте профессиональные фото для лукбука за 90 секунд.
-          Загрузите одежду — AI оденет модель и снимет её в любой локации.
+        {/* Logo */}
+        <div className="space-y-1">
+          <div className="inline-block bg-red-600 text-white text-xs font-bold px-3 py-1 rounded mb-3 tracking-widest uppercase">
+            PROF1GROUP
+          </div>
+          <h1 className="text-4xl font-black text-white uppercase tracking-tight">
+            Lookbook Generator
+          </h1>
+          <p className="text-red-500 text-sm font-medium uppercase tracking-widest">
+            мережа військових магазинів
+          </p>
+        </div>
+
+        <p className="text-gray-400 text-base">
+          Створюйте професійні фото для лукбуку за 90 секунд.
+          Завантажте одяг — AI одягне модель та зніме її в будь-якій локації.
         </p>
 
         {/* Feature list */}
         <div className="grid grid-cols-2 gap-3 text-left">
           {[
-            { emoji: "👗", text: "Любая одежда: верх, низ, шляпа, кеды" },
-            { emoji: "🧍", text: "Модель под ваши параметры (рост, вес, грудь)" },
-            { emoji: "🌲", text: "Любая локация: лес, горы, пляж, студия" },
-            { emoji: "📸", text: "Результат как профессиональная фотосессия" },
+            { icon: "▪", text: "Будь-який одяг: верх, низ, головний убір, взуття" },
+            { icon: "▪", text: "Модель за вашими параметрами (зріст, вага, стать)" },
+            { icon: "▪", text: "Будь-яка локація: ліс, гори, пляж, студія" },
+            { icon: "▪", text: "Результат як з професійної фотосесії" },
           ].map((f) => (
             <div
               key={f.text}
-              className="flex gap-2 items-start p-3 bg-white rounded-xl shadow-sm border border-gray-100"
+              className="flex gap-2 items-start p-3 bg-gray-900 rounded-xl border border-gray-800"
             >
-              <span className="text-xl shrink-0">{f.emoji}</span>
-              <span className="text-sm text-gray-600">{f.text}</span>
+              <span className="text-red-500 shrink-0 mt-0.5 text-lg leading-none">{f.icon}</span>
+              <span className="text-sm text-gray-300">{f.text}</span>
             </div>
           ))}
         </div>
@@ -35,14 +43,13 @@ export default function HomePage() {
         {/* CTA */}
         <Link
           href="/generate"
-          className="inline-block w-full py-4 bg-gradient-to-r from-violet-600 to-purple-700 text-white font-semibold rounded-2xl text-lg shadow-lg hover:opacity-90 transition-opacity"
+          className="inline-block w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-lg shadow-lg transition-colors uppercase tracking-wide"
         >
-          Создать лукбук →
+          Створити лукбук →
         </Link>
 
-        {/* Pricing hint */}
-        <p className="text-xs text-gray-400">
-          ~$0.10 за одно фото · Оплата через FAL.ai
+        <p className="text-xs text-gray-600">
+          ~$0.10 за одне фото · На основі FAL.ai
         </p>
       </div>
     </div>

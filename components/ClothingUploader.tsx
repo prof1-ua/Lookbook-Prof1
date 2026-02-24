@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { X, Upload } from "lucide-react";
@@ -37,8 +37,6 @@ function SlotDropzone({
   onUpload: (file: File) => void;
   onRemove: () => void;
 }) {
-  const [isRemoving, setIsRemoving] = useState(false);
-
   const onDrop = useCallback(
     (accepted: File[]) => {
       if (accepted[0]) onUpload(accepted[0]);
@@ -58,7 +56,7 @@ function SlotDropzone({
     const isUploading = !item.uploadedUrl && !item.cleanUrl;
     const isProcessingBg = !!item.uploadedUrl && !item.cleanUrl;
     return (
-      <div className="relative group rounded-xl overflow-hidden border-2 border-violet-200 bg-violet-50 aspect-square">
+      <div className="relative group rounded-xl overflow-hidden border-2 border-red-200 bg-red-50 aspect-square">
         <Image
           src={displayUrl}
           alt={config.label}
@@ -68,13 +66,13 @@ function SlotDropzone({
         />
         {isUploading && (
           <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-1">
-            <div className="w-5 h-5 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-gray-500">Загрузка…</span>
           </div>
         )}
         {isProcessingBg && (
           <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-1">
-            <div className="w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
             <span className="text-xs text-gray-500">Убираем фон…</span>
           </div>
         )}
@@ -99,8 +97,8 @@ function SlotDropzone({
       className={cn(
         "rounded-xl border-2 border-dashed aspect-square flex flex-col items-center justify-center cursor-pointer transition-colors p-4 text-center",
         isDragActive
-          ? "border-violet-500 bg-violet-50"
-          : "border-gray-200 hover:border-violet-400 hover:bg-violet-50/50"
+          ? "border-red-500 bg-red-50"
+          : "border-gray-200 hover:border-red-400 hover:bg-red-50/50"
       )}
     >
       <input {...getInputProps()} />

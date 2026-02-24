@@ -172,10 +172,13 @@ export default function GeneratePage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-violet-600 to-purple-700 px-6 py-4 text-white">
-          <h1 className="text-lg font-bold">Lookbook Generator</h1>
-          <p className="text-violet-200 text-xs mt-0.5">
-            Профессиональные фото для лукбука с AI
+        <div className="bg-gray-950 border-b-2 border-red-600 px-6 py-4 text-white">
+          <div className="flex items-center gap-2">
+            <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded tracking-widest uppercase">P1G</span>
+            <h1 className="text-lg font-black uppercase tracking-tight">Lookbook Generator</h1>
+          </div>
+          <p className="text-gray-400 text-xs mt-0.5 uppercase tracking-wide">
+            PROF1GROUP · мережа військових магазинів
           </p>
         </div>
 
@@ -191,7 +194,7 @@ export default function GeneratePage() {
                 className={cn(
                   "flex-1 py-3 text-xs font-medium text-center transition-colors border-b-2",
                   isCurrent
-                    ? "border-violet-600 text-violet-600"
+                    ? "border-red-600 text-red-600"
                     : isDone
                     ? "border-transparent text-green-600 cursor-pointer"
                     : "border-transparent text-gray-400 cursor-default"
@@ -200,7 +203,7 @@ export default function GeneratePage() {
                 <span
                   className={cn(
                     "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs mr-1",
-                    isCurrent && "bg-violet-600 text-white",
+                    isCurrent && "bg-red-600 text-white",
                     isDone && "bg-green-100 text-green-600",
                     !isCurrent && !isDone && "bg-gray-100 text-gray-400"
                   )}
@@ -255,7 +258,7 @@ export default function GeneratePage() {
                 "flex-1 py-3 rounded-xl text-sm font-medium transition-colors",
                 wizardStep === "clothing" && !hasClothing
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-violet-600 text-white hover:bg-violet-700"
+                  : "bg-red-600 text-white hover:bg-red-700"
               )}
             >
               Далее
@@ -268,7 +271,7 @@ export default function GeneratePage() {
                 "flex-1 py-3 rounded-xl text-sm font-semibold transition-colors",
                 !hasClothing || isUploading
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-violet-600 to-purple-700 text-white hover:opacity-90"
+                  : "bg-red-600 text-white hover:bg-red-700"
               )}
             >
               {isUploading ? "Загрузка файлов…" : "Создать лукбук ✨"}

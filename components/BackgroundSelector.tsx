@@ -47,8 +47,8 @@ function Chips<T extends string>({
           className={cn(
             "px-3 py-1.5 rounded-full text-sm border transition-colors",
             value === opt.value
-              ? "bg-violet-600 border-violet-600 text-white"
-              : "border-gray-200 text-gray-600 hover:border-violet-400"
+              ? "bg-red-600 border-red-600 text-white"
+              : "border-gray-200 text-gray-600 hover:border-red-400"
           )}
         >
           {opt.label}
@@ -77,8 +77,8 @@ export function BackgroundSelector({ params, onChange }: Props) {
               className={cn(
                 "rounded-xl p-3 border-2 text-center transition-all",
                 params.location === loc.value
-                  ? "border-violet-500 bg-violet-50"
-                  : "border-gray-100 hover:border-violet-300 bg-white"
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-100 hover:border-red-300 bg-white"
               )}
             >
               <div
@@ -126,7 +126,7 @@ export function BackgroundSelector({ params, onChange }: Props) {
           onChange={(e) => update("customPrompt", e.target.value || undefined)}
           placeholder="Например: заснеженный японский сад с цветущей сакурой, зима..."
           rows={2}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-400"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
         />
       </div>
     </div>

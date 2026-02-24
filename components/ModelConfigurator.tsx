@@ -35,8 +35,8 @@ function Chips<T extends string>({
           className={cn(
             "px-3 py-1.5 rounded-full text-sm border transition-colors",
             value === opt.value
-              ? "bg-violet-600 border-violet-600 text-white"
-              : "border-gray-200 text-gray-600 hover:border-violet-400"
+              ? "bg-red-600 border-red-600 text-white"
+              : "border-gray-200 text-gray-600 hover:border-red-400"
           )}
         >
           {opt.label}
@@ -81,7 +81,7 @@ export function ModelConfigurator({ params, onChange }: Props) {
           max={200}
           value={params.height}
           onChange={(e) => update("height", Number(e.target.value))}
-          className="w-full accent-violet-600"
+          className="w-full accent-red-600"
         />
         <div className="flex justify-between text-xs text-gray-400">
           <span>150 см</span>
@@ -123,7 +123,7 @@ export function ModelConfigurator({ params, onChange }: Props) {
               className={cn(
                 "w-8 h-8 rounded-full border-2 transition-transform",
                 params.skinTone === tone
-                  ? "border-violet-600 scale-125"
+                  ? "border-red-600 scale-125"
                   : "border-transparent hover:scale-110"
               )}
             />
