@@ -6,6 +6,7 @@ import { ModelConfigurator } from "@/components/ModelConfigurator";
 import { BackgroundSelector } from "@/components/BackgroundSelector";
 import { GenerationProgress } from "@/components/GenerationProgress";
 import { LookbookResult } from "@/components/LookbookResult";
+import { P1GIcon } from "@/components/P1GIcon";
 import { cn } from "@/lib/utils";
 import type {
   ClothingItem,
@@ -173,13 +174,15 @@ export default function GeneratePage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
         <div className="bg-gray-950 border-b-2 border-red-600 px-6 py-4 text-white">
-          <div className="flex items-center gap-2">
-            <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded tracking-widest uppercase">P1G</span>
-            <h1 className="text-lg font-black uppercase tracking-tight">Lookbook Generator</h1>
+          <div className="flex items-center gap-3">
+            <P1GIcon size={36} />
+            <div>
+              <h1 className="text-lg font-black uppercase tracking-tight leading-none">Lookbook Generator</h1>
+              <p className="text-gray-400 text-xs mt-0.5 uppercase tracking-wide">
+                PROF1GROUP · мережа військових магазинів
+              </p>
+            </div>
           </div>
-          <p className="text-gray-400 text-xs mt-0.5 uppercase tracking-wide">
-            PROF1GROUP · мережа військових магазинів
-          </p>
         </div>
 
         {/* Stepper */}

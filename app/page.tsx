@@ -1,14 +1,13 @@
 import Link from "next/link";
+import { P1GIcon } from "@/components/P1GIcon";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center p-6 text-center">
       <div className="max-w-lg space-y-6">
         {/* Logo */}
-        <div className="space-y-1">
-          <div className="inline-block bg-red-600 text-white text-xs font-bold px-3 py-1 rounded mb-3 tracking-widest uppercase">
-            PROF1GROUP
-          </div>
+        <div className="flex flex-col items-center space-y-3">
+          <P1GIcon size={72} />
           <h1 className="text-4xl font-black text-white uppercase tracking-tight">
             Lookbook Generator
           </h1>

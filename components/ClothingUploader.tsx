@@ -3,22 +3,42 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Shirt, HardHat, Footprints } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClothingSlot, ClothingItem } from "@/types/lookbook";
+
+// Кастомна SVG-іконка штанів (lucide не має)
+function PantsIcon({ size = 24, className = "" }: { size?: number | string; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <rect x="4" y="2" width="16" height="3" rx="1" />
+      <path d="M4 5L2 21h5l5-9 5 9h5L20 5" />
+    </svg>
+  );
+}
 
 interface SlotConfig {
   slot: ClothingSlot;
   label: string;
-  emoji: string;
+  Icon: React.ElementType;
   hint: string;
 }
 
 const SLOTS: SlotConfig[] = [
-  { slot: "top", label: "Верх", emoji: "👕", hint: "Футболка, рубашка, свитер, куртка…" },
-  { slot: "bottom", label: "Низ", emoji: "👖", hint: "Брюки, джинсы, юбка, шорты…" },
-  { slot: "hat", label: "Головной убор", emoji: "🧢", hint: "Кепка, шляпа, берет…" },
-  { slot: "shoes", label: "Обувь", emoji: "👟", hint: "Кроссовки, туфли, ботинки…" },
+  { slot: "top",    label: "Верх",           Icon: Shirt,     hint: "Футболка, рубашка, куртка…" },
+  { slot: "bottom", label: "Низ",            Icon: PantsIcon, hint: "Брюки, джинсы, шорты…" },
+  { slot: "hat",    label: "Головной убор",  Icon: HardHat,   hint: "Каска, кепка, берет…" },
+  { slot: "shoes",  label: "Обувь",          Icon: Footprints, hint: "Берцы, кроссовки, ботинки…" },
 ];
 
 interface Props {
@@ -85,7 +105,7 @@ function SlotDropzone({
           </button>
         )}
         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
-          {config.emoji} {config.label}
+          {config.label}
         </div>
       </div>
     );
@@ -102,10 +122,10 @@ function SlotDropzone({
       )}
     >
       <input {...getInputProps()} />
-      <span className="text-3xl mb-2">{config.emoji}</span>
+      <config.Icon size={28} className="mb-2 text-gray-400" />
       <p className="text-sm font-medium text-gray-700">{config.label}</p>
-      <p className="text-xs text-gray-400 mt-1">{config.hint}</p>
-      <Upload size={16} className="mt-3 text-gray-400" />
+      <p className="text-xs text-gray-400 mt-1 leading-tight">{config.hint}</p>
+      <Upload size={14} className="mt-2 text-gray-300" />
     </div>
   );
 }
@@ -113,12 +133,10 @@ function SlotDropzone({
 export function ClothingUploader({ clothing, onChange }: Props) {
   async function handleUpload(slot: ClothingSlot, file: File) {
     const originalUrl = URL.createObjectURL(file);
-    // Set immediately with original
     onChange(slot, { slot, originalUrl });
 
     try {
       const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
-      // Сжимаем до 1024px — загрузка ускоряется в 5-10 раз
       const resized = await resizeImage(file, 1024);
       const uploadedUrl = await uploadFileToFal(resized);
       onChange(slot, { slot, originalUrl, uploadedUrl });
@@ -134,17 +152,17 @@ export function ClothingUploader({ clothing, onChange }: Props) {
         onChange(slot, { slot, originalUrl, uploadedUrl, cleanUrl });
       }
     } catch {
-      // Upload failed — uploadedUrl остаётся undefined
+      // Upload failed — uploadedUrl залишається undefined
     }
   }
 
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">
-        Загрузите элементы одежды
+        Завантажте елементи одягу
       </h2>
       <p className="text-sm text-gray-500">
-        Добавьте хотя бы один элемент. Фон удалится автоматически.
+        Додайте хоча б один елемент. Фон видалиться автоматично.
       </p>
       <div className="grid grid-cols-2 gap-4">
         {SLOTS.map((config) => (

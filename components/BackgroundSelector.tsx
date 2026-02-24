@@ -1,5 +1,6 @@
 "use client";
 
+import { Trees, Mountain, Waves, Building2, Camera, Wheat } from "lucide-react";
 import type { BackgroundParams, LocationPreset, TimeOfDay, Weather } from "@/types/lookbook";
 import { cn } from "@/lib/utils";
 
@@ -8,13 +9,13 @@ interface Props {
   onChange: (params: BackgroundParams) => void;
 }
 
-const LOCATIONS: { value: LocationPreset; label: string; emoji: string; preview: string }[] = [
-  { value: "forest", label: "Лес", emoji: "🌲", preview: "bg-green-800" },
-  { value: "mountains", label: "Горы", emoji: "⛰️", preview: "bg-slate-600" },
-  { value: "beach", label: "Пляж", emoji: "🏖️", preview: "bg-amber-300" },
-  { value: "city", label: "Город", emoji: "🏙️", preview: "bg-gray-700" },
-  { value: "studio", label: "Студия", emoji: "💡", preview: "bg-gray-200" },
-  { value: "field", label: "Поле", emoji: "🌾", preview: "bg-yellow-500" },
+const LOCATIONS: { value: LocationPreset; label: string; Icon: React.ElementType; preview: string }[] = [
+  { value: "forest",    label: "Лес",     Icon: Trees,     preview: "bg-green-800" },
+  { value: "mountains", label: "Горы",    Icon: Mountain,  preview: "bg-slate-600" },
+  { value: "beach",     label: "Пляж",    Icon: Waves,     preview: "bg-amber-300" },
+  { value: "city",      label: "Город",   Icon: Building2, preview: "bg-gray-700" },
+  { value: "studio",    label: "Студия",  Icon: Camera,    preview: "bg-gray-300" },
+  { value: "field",     label: "Поле",    Icon: Wheat,     preview: "bg-yellow-500" },
 ];
 
 const TIME_OPTIONS: { value: TimeOfDay; label: string }[] = [
@@ -87,7 +88,7 @@ export function BackgroundSelector({ params, onChange }: Props) {
                   loc.preview
                 )}
               >
-                {loc.emoji}
+                <loc.Icon size={22} className="text-white drop-shadow" />
               </div>
               <span className="text-xs font-medium text-gray-700">{loc.label}</span>
             </button>
