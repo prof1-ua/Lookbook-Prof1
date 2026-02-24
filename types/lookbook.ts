@@ -47,12 +47,9 @@ export type Pose =
 
 export type Accessory =
   | "none"
-  | "handbag"
-  | "clutch"
-  | "umbrella"
-  | "coffee"
-  | "flowers"
-  | "phone";
+  | "ak47"
+  | "glock"
+  | "tactical_backpack";
 
 export interface ModelParams {
   gender: Gender;

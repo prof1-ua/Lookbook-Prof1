@@ -175,12 +175,9 @@ export function ModelConfigurator({ params, onChange }: Props) {
         <Chips<Accessory>
           options={[
             { value: "none", label: "Ничего" },
-            { value: "handbag", label: "Сумка" },
-            { value: "clutch", label: "Клатч" },
-            { value: "umbrella", label: "Зонт" },
-            { value: "coffee", label: "Кофе" },
-            { value: "flowers", label: "Цветы" },
-            { value: "phone", label: "Телефон" },
+            { value: "ak47", label: "АК-47" },
+            { value: "glock", label: "Glock" },
+            { value: "tactical_backpack", label: "Рюкзак 5.11" },
           ]}
           value={params.accessory}
           onChange={(v) => update("accessory", v)}

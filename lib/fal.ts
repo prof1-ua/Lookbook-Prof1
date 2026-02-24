@@ -113,12 +113,9 @@ const POSE_PROMPTS: Record<Pose, string> = {
 
 const ACCESSORY_PROMPTS: Record<Accessory, string> = {
   none: "",
-  handbag: "carrying an elegant handbag in one hand",
-  clutch: "holding a stylish clutch bag in one hand",
-  umbrella: "holding an open umbrella",
-  coffee: "holding a takeaway coffee cup in one hand",
-  flowers: "holding a beautiful bouquet of flowers",
-  phone: "holding a smartphone, glancing at the screen",
+  ak47: "holding an AK-47 assault rifle, two-handed grip, tactical ready position",
+  glock: "holding a Glock pistol in one hand, tactical stance, pointed downward safely",
+  tactical_backpack: "wearing a 5.11 Tactical backpack on back, straps adjusted, ready for action",
 };
 
 const LOCATION_PROMPTS: Record<LocationPreset, string> = {
