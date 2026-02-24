@@ -15,14 +15,14 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `lookbook-${Date.now()}.jpg`;
+    a.download = `prof1group-lookbook-${Date.now()}.jpg`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
   async function handleShare() {
     if (navigator.share) {
-      await navigator.share({ title: "Мой лукбук", url: resultUrl });
+      await navigator.share({ title: "PROF1GROUP Lookbook", url: resultUrl });
     } else {
       await navigator.clipboard.writeText(resultUrl);
       alert("Ссылка скопирована!");
@@ -35,7 +35,6 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
         Ваш лукбук готов!
       </h2>
 
-      {/* Result image */}
       <div className="relative aspect-[3/4] w-full max-w-sm mx-auto rounded-2xl overflow-hidden shadow-2xl">
         <Image
           src={resultUrl}
@@ -46,7 +45,6 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
         />
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-col gap-3">
         <button
           onClick={handleDownload}

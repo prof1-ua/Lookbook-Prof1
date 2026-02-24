@@ -134,7 +134,7 @@ export function ModelConfigurator({ params, onChange }: Props) {
       <Field label="Цвет волос">
         <Chips<HairColor>
           options={[
-            { value: "blonde", label: "Блонд" },
+            { value: "blonde", label: "Золотистый" },
             { value: "brunette", label: "Каштановый" },
             { value: "black", label: "Чёрный" },
             { value: "red", label: "Рыжий" },
