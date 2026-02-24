@@ -9,7 +9,7 @@ export default function HomePage() {
         <div className="flex flex-col items-center space-y-3">
           <P1GIcon size={72} />
           <h1 className="text-4xl font-black text-white uppercase tracking-tight">
-            Lookbook Generator
+            PROF1GROUP Lookbook Generator
           </h1>
           <p className="text-red-500 text-sm font-medium uppercase tracking-widest">
             мережа військових магазинів

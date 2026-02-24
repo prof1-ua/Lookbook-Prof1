@@ -177,9 +177,9 @@ export default function GeneratePage() {
           <div className="flex items-center gap-3">
             <P1GIcon size={36} />
             <div>
-              <h1 className="text-lg font-black uppercase tracking-tight leading-none">Lookbook Generator</h1>
+              <h1 className="text-lg font-black uppercase tracking-tight leading-none">PROF1GROUP Lookbook Generator</h1>
               <p className="text-gray-400 text-xs mt-0.5 uppercase tracking-wide">
-                PROF1GROUP · мережа військових магазинів
+                мережа військових магазинів
               </p>
             </div>
           </div>
