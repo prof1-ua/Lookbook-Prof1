@@ -8,7 +8,7 @@ interface Props {
 export function P1GIcon({ size = 40, className = "" }: Props) {
   return (
     <Image
-      src="/logo.png"
+      src="/logo+.png"
       width={size}
       height={size}
       alt="PROF1GROUP"
