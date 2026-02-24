@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
       cleanedImages.hat,
       cleanedImages.shoes,
       cleanedImages.top,    // reference для верха — FLUX точнее сохранит принт/цвет
-      cleanedImages.bottom  // reference для низа
+      cleanedImages.bottom, // reference для низа
+      model.pose,
+      model.accessory
     );
 
     // ── Шаг 5: Апскейл ────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ModelParams, Gender, BodyType, SkinTone, HairColor, HairLength, BustSize } from "@/types/lookbook";
+import type { ModelParams, Gender, BodyType, SkinTone, HairColor, HairLength, BustSize, Pose, Accessory } from "@/types/lookbook";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -154,6 +154,36 @@ export function ModelConfigurator({ params, onChange }: Props) {
           ]}
           value={params.hairLength}
           onChange={(v) => update("hairLength", v)}
+        />
+      </Field>
+
+      <Field label="Поза">
+        <Chips<Pose>
+          options={[
+            { value: "standing", label: "Стоит" },
+            { value: "walking", label: "Идёт" },
+            { value: "leaning", label: "Опирается" },
+            { value: "over_shoulder", label: "Через плечо" },
+            { value: "sitting", label: "Сидит" },
+          ]}
+          value={params.pose}
+          onChange={(v) => update("pose", v)}
+        />
+      </Field>
+
+      <Field label="Предмет в руках">
+        <Chips<Accessory>
+          options={[
+            { value: "none", label: "Ничего" },
+            { value: "handbag", label: "Сумка" },
+            { value: "clutch", label: "Клатч" },
+            { value: "umbrella", label: "Зонт" },
+            { value: "coffee", label: "Кофе" },
+            { value: "flowers", label: "Цветы" },
+            { value: "phone", label: "Телефон" },
+          ]}
+          value={params.accessory}
+          onChange={(v) => update("accessory", v)}
         />
       </Field>
     </div>

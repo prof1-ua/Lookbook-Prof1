@@ -38,6 +38,22 @@ export type HairLength = "short" | "medium" | "long";
 
 export type BustSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
+export type Pose =
+  | "standing"
+  | "walking"
+  | "leaning"
+  | "over_shoulder"
+  | "sitting";
+
+export type Accessory =
+  | "none"
+  | "handbag"
+  | "clutch"
+  | "umbrella"
+  | "coffee"
+  | "flowers"
+  | "phone";
+
 export interface ModelParams {
   gender: Gender;
   /** cm, 150–200 */
@@ -47,6 +63,8 @@ export interface ModelParams {
   skinTone: SkinTone;
   hairColor: HairColor;
   hairLength: HairLength;
+  pose: Pose;
+  accessory: Accessory;
 }
 
 // ─── Background / Location ────────────────────────────────────────────────────

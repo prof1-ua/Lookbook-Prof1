@@ -5,6 +5,8 @@ import type {
   LocationPreset,
   TimeOfDay,
   Weather,
+  Pose,
+  Accessory,
 } from "@/types/lookbook";
 
 fal.config({ credentials: process.env.FAL_KEY! });
@@ -101,6 +103,24 @@ export async function applyFashnTryOn(
 
 // ─── Шаг 4: Финализация — фон + шляпа + обувь (FLUX.2 [pro] edit) ────────────
 
+const POSE_PROMPTS: Record<Pose, string> = {
+  standing: "standing naturally, confident pose, hands relaxed at sides",
+  walking: "walking naturally, one step forward, dynamic movement, mid-stride",
+  leaning: "leaning casually against a wall or surface, relaxed and confident",
+  over_shoulder: "turned slightly away, looking back over shoulder toward camera, elegant editorial pose",
+  sitting: "sitting elegantly, legs crossed or to the side, poised",
+};
+
+const ACCESSORY_PROMPTS: Record<Accessory, string> = {
+  none: "",
+  handbag: "carrying an elegant handbag in one hand",
+  clutch: "holding a stylish clutch bag in one hand",
+  umbrella: "holding an open umbrella",
+  coffee: "holding a takeaway coffee cup in one hand",
+  flowers: "holding a beautiful bouquet of flowers",
+  phone: "holding a smartphone, glancing at the screen",
+};
+
 const LOCATION_PROMPTS: Record<LocationPreset, string> = {
   forest:
     "dense green forest, tall pine trees, dappled natural light through leaves, forest path",
@@ -134,7 +154,9 @@ export async function finalizeScene(
   hatUrl?: string,
   shoesUrl?: string,
   topUrl?: string,
-  bottomUrl?: string
+  bottomUrl?: string,
+  pose?: Pose,
+  accessory?: Accessory
 ): Promise<string> {
   // image 1 — одетая модель из FASHN (основа)
   const imageUrls: string[] = [dressedModelUrl];
@@ -171,11 +193,21 @@ export async function finalizeScene(
       ? ` Keep all clothing faithful to the reference images: ${garmentRefs.join(", ")} — preserve exact colors, prints, patterns, textures.`
       : "";
 
+  const posePart = pose && pose !== "standing"
+    ? ` The model is ${POSE_PROMPTS[pose]}.`
+    : ` The model stands naturally in this setting.`;
+
+  const accessoryPart = accessory && accessory !== "none"
+    ? ` The model is ${ACCESSORY_PROMPTS[accessory]}.`
+    : "";
+
   const prompt =
-    `Take the fashion model exactly from image 1 — preserve the person, pose, and all clothing details precisely.` +
+    `Take the fashion model exactly from image 1 — preserve the person and all clothing details precisely.` +
     garmentPart +
     ` Replace the background with: ${sceneDesc}.` +
-    ` The model stands naturally in this setting with matching realistic lighting and shadows.` +
+    posePart +
+    accessoryPart +
+    ` Matching realistic lighting and shadows.` +
     ` Professional fashion editorial photography, Vogue magazine quality, 85mm lens, shallow depth of field, 8k, photorealistic.`;
 
   const result = await fal.run("fal-ai/flux-2-pro/edit", {

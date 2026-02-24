@@ -25,6 +25,8 @@ const DEFAULT_MODEL: ModelParams = {
   skinTone: "light",
   hairColor: "brunette",
   hairLength: "long",
+  pose: "standing",
+  accessory: "none",
 };
 
 const DEFAULT_BG: BackgroundParams = {
