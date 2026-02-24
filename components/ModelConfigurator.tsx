@@ -139,6 +139,7 @@ export function ModelConfigurator({ params, onChange }: Props) {
             { value: "black", label: "Чёрный" },
             { value: "red", label: "Рыжий" },
             { value: "gray", label: "Пепельный" },
+            { value: "white", label: "Белый" },
           ]}
           value={params.hairColor}
           onChange={(v) => update("hairColor", v)}
