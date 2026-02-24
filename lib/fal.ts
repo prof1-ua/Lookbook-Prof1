@@ -113,8 +113,8 @@ const POSE_PROMPTS: Record<Pose, string> = {
 
 const ACCESSORY_PROMPTS: Record<Accessory, string> = {
   none: "",
-  ak47: "holding an AK-47 assault rifle, two-handed grip, tactical ready position",
-  glock: "holding a Glock pistol in one hand, tactical stance, pointed downward safely",
+  ak47: "AK-47 rifle slung across chest on tactical sling, operator carry position, military style",
+  glock: "Glock pistol in drop-leg tactical holster on thigh, law enforcement equipment",
   tactical_backpack: "wearing a 5.11 Tactical backpack on back, straps adjusted, ready for action",
 };
 
