@@ -110,12 +110,8 @@ export async function POST(req: NextRequest) {
         inpaintPrompt:
           "eyewear from the reference image — exact same frame color, shape, lens tint, temple design, photorealistic, naturally worn",
       },
-      cleanedImages.gloves && {
-        url: cleanedImages.gloves,
-        segmentPrompt: "gloves on both hands",
-        inpaintPrompt:
-          "gloves from the reference image — exact same color, material, cut, logos, photorealistic, fitted on hands",
-      },
+      // Перчатки исключены из inpainting — маска рук захватывает рукава рубашки,
+      // что вызывает перенос текстуры на одежду. Остаются FLUX reference-only.
     ].filter(Boolean) as Array<{
       url: string;
       segmentPrompt: string;

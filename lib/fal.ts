@@ -289,8 +289,8 @@ export async function getAccessoryMask(
       image_url: imageUrl,
       prompt: segmentPrompt,
       mask_only: true,
-      expand_mask: 8,
-      blur_mask: 2,
+      expand_mask: 2,
+      blur_mask: 0,
     },
   }) as { data: { image: { url: string } } };
   return result.data.image.url;
@@ -310,7 +310,7 @@ export async function inpaintAccessory(
       prompt,
       num_inference_steps: 30,
       guidance_scale: 2.5,
-      strength: 0.85,
+      strength: 0.65,
       output_format: "jpeg",
     },
   }) as { data: { images: Array<{ url: string }> } };
