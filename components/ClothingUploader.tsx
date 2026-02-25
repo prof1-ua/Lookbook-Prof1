@@ -66,14 +66,18 @@ function SlotDropzone({
   const extraInputRef = useRef<HTMLInputElement>(null);
 
   const onDrop = useCallback(
-    (accepted: File[]) => { if (accepted[0]) onUpload(accepted[0]); },
-    [onUpload]
+    (accepted: File[]) => {
+      if (!accepted.length) return;
+      onUpload(accepted[0]);
+      if (accepted.length > 1) onExtraUpload(accepted.slice(1));
+    },
+    [onUpload, onExtraUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
-    maxFiles: 1,
+    maxFiles: 3,
     disabled: !!item,
   });
 
@@ -172,6 +176,7 @@ function SlotDropzone({
       <p className="text-sm font-medium text-gray-700">{config.label}</p>
       <p className="text-xs text-gray-400 mt-1 leading-tight">{config.hint}</p>
       <Upload size={14} className="mt-2 text-gray-300" />
+      <p className="text-xs text-gray-300 mt-1">до 3 фото сразу</p>
     </div>
   );
 }
