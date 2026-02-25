@@ -59,7 +59,7 @@ function SlotDropzone({
 }: {
   config: SlotConfig;
   item?: ClothingItem;
-  onUpload: (file: File) => void;
+  onUpload: (main: File, extras?: File[]) => void;
   onRemove: () => void;
   onExtraUpload: (files: File[]) => void;
 }) {
@@ -68,10 +68,9 @@ function SlotDropzone({
   const onDrop = useCallback(
     (accepted: File[]) => {
       if (!accepted.length) return;
-      onUpload(accepted[0]);
-      if (accepted.length > 1) onExtraUpload(accepted.slice(1));
+      onUpload(accepted[0], accepted.slice(1));
     },
-    [onUpload, onExtraUpload]
+    [onUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -182,15 +181,25 @@ function SlotDropzone({
 }
 
 export function ClothingUploader({ clothing, onChange }: Props) {
-  async function handleUpload(slot: ClothingSlot, file: File) {
+  async function handleUpload(slot: ClothingSlot, file: File, extraFiles?: File[]) {
     const originalUrl = URL.createObjectURL(file);
     onChange(slot, { slot, originalUrl });
 
     try {
       const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
-      const resized = await resizeImage(file, 1024);
-      const uploadedUrl = await uploadFileToFal(resized);
-      onChange(slot, { slot, originalUrl, uploadedUrl });
+
+      // Загружаем основной файл и экстра-файлы параллельно
+      const [uploadedUrl, ...extraUploadedUrls] = await Promise.all([
+        resizeImage(file, 1024).then(uploadFileToFal),
+        ...(extraFiles ?? []).slice(0, 2).map((f) =>
+          resizeImage(f, 1024).then(uploadFileToFal)
+        ),
+      ]);
+
+      onChange(slot, {
+        slot, originalUrl, uploadedUrl,
+        ...(extraUploadedUrls.length > 0 ? { extraUploadedUrls } : {}),
+      });
 
       const res = await fetch("/api/remove-background", {
         method: "POST",
@@ -200,7 +209,10 @@ export function ClothingUploader({ clothing, onChange }: Props) {
 
       if (res.ok) {
         const { cleanUrl } = await res.json();
-        onChange(slot, { slot, originalUrl, uploadedUrl, cleanUrl });
+        onChange(slot, {
+          slot, originalUrl, uploadedUrl, cleanUrl,
+          ...(extraUploadedUrls.length > 0 ? { extraUploadedUrls } : {}),
+        });
       }
     } catch {
       // Upload failed
@@ -243,7 +255,7 @@ export function ClothingUploader({ clothing, onChange }: Props) {
             key={config.slot}
             config={config}
             item={clothing[config.slot]}
-            onUpload={(file) => handleUpload(config.slot, file)}
+            onUpload={(main, extras) => handleUpload(config.slot, main, extras)}
             onRemove={() => onChange(config.slot, null)}
             onExtraUpload={(files) => handleExtraUpload(config.slot, files)}
           />
