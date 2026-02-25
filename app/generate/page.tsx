@@ -144,6 +144,13 @@ export default function GeneratePage() {
     }
   }
 
+  function handleEdit() {
+    setGenStep("idle");
+    setResultUrl(null);
+    setError(null);
+    setWizardStep("clothing");
+  }
+
   function handleReset() {
     setClothing({});
     setModelParams(DEFAULT_MODEL);
@@ -161,7 +168,7 @@ export default function GeneratePage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
-          <LookbookResult resultUrl={resultUrl} onReset={handleReset} />
+          <LookbookResult resultUrl={resultUrl} onReset={handleReset} onEdit={handleEdit} />
         </div>
       </div>
     );

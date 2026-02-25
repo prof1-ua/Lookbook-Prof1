@@ -1,14 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { Download, RotateCcw, Share2 } from "lucide-react";
+import { Download, RotateCcw, Share2, Pencil } from "lucide-react";
 
 interface Props {
   resultUrl: string;
   onReset: () => void;
+  onEdit: () => void;
 }
 
-export function LookbookResult({ resultUrl, onReset }: Props) {
+export function LookbookResult({ resultUrl, onReset, onEdit }: Props) {
   async function handleDownload() {
     const res = await fetch(resultUrl);
     const blob = await res.blob();
@@ -63,11 +64,19 @@ export function LookbookResult({ resultUrl, onReset }: Props) {
         </button>
 
         <button
-          onClick={onReset}
+          onClick={onEdit}
           className="flex items-center justify-center gap-2 w-full py-3 px-6 border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl font-medium transition-colors"
         >
-          <RotateCcw size={18} />
-          Создать новый лукбук
+          <Pencil size={18} />
+          Изменить и пересоздать
+        </button>
+
+        <button
+          onClick={onReset}
+          className="flex items-center justify-center gap-2 w-full py-3 px-6 text-gray-400 hover:text-gray-600 rounded-xl font-medium transition-colors text-sm"
+        >
+          <RotateCcw size={15} />
+          Начать заново
         </button>
       </div>
     </div>
