@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ClothingUploader } from "@/components/ClothingUploader";
 import { ModelConfigurator } from "@/components/ModelConfigurator";
 import { BackgroundSelector } from "@/components/BackgroundSelector";
@@ -16,6 +16,7 @@ import type {
   BackgroundParams,
   GenerationStep,
   StyleReference,
+  LoRAItem,
 } from "@/types/lookbook";
 
 // ─── Defaults ──────────────────────────────────────────────────────────────────
@@ -64,6 +65,16 @@ export default function GeneratePage() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // LoRA polling intervals — slot → intervalId
+  const loraPollers = useRef<Partial<Record<ClothingSlot, ReturnType<typeof setInterval>>>>({});
+
+  useEffect(() => {
+    return () => {
+      // Cleanup all polling intervals on unmount
+      Object.values(loraPollers.current).forEach(clearInterval);
+    };
+  }, []);
+
   const isGenerating = genStep !== "idle" && genStep !== "done" && genStep !== "error";
 
   function updateClothing(slot: ClothingSlot, item: ClothingItem | null) {
@@ -77,6 +88,66 @@ export default function GeneratePage() {
 
   const hasClothing = Object.keys(clothing).length > 0;
   const isUploading = Object.values(clothing).some((item) => !item.uploadedUrl && !item.cleanUrl);
+
+  async function handleTrainLora(slot: ClothingSlot) {
+    const item = clothing[slot];
+    if (!item?.uploadedUrl) return;
+
+    // Collect all uploaded URLs for this slot
+    const imageUrls = [
+      item.uploadedUrl,
+      ...(item.extraUploadedUrls ?? []),
+    ].filter(Boolean);
+
+    // Mark as training
+    updateClothing(slot, { ...item, loraStatus: "training" });
+
+    try {
+      const res = await fetch("/api/train-lora", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrls, slot }),
+      });
+
+      if (!res.ok) throw new Error("Failed to submit training job");
+
+      const { requestId, triggerWord } = await res.json();
+      updateClothing(slot, { ...item, loraStatus: "training", loraRequestId: requestId, triggerWord });
+
+      // Start polling every 8 seconds
+      const intervalId = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/train-lora/status?requestId=${requestId}`);
+          const data = await statusRes.json();
+
+          if (data.status === "done") {
+            clearInterval(intervalId);
+            delete loraPollers.current[slot];
+            setClothing((prev) => {
+              const current = prev[slot];
+              if (!current) return prev;
+              return { ...prev, [slot]: { ...current, loraStatus: "ready", loraUrl: data.loraUrl } };
+            });
+          } else if (data.status === "failed") {
+            clearInterval(intervalId);
+            delete loraPollers.current[slot];
+            setClothing((prev) => {
+              const current = prev[slot];
+              if (!current) return prev;
+              return { ...prev, [slot]: { ...current, loraStatus: "error" } };
+            });
+          }
+        } catch {
+          // Network error — keep polling
+        }
+      }, 8000);
+
+      loraPollers.current[slot] = intervalId;
+    } catch (err) {
+      console.error(err);
+      updateClothing(slot, { ...item, loraStatus: "error" });
+    }
+  }
 
   async function handleGenerate() {
     setError(null);
@@ -109,6 +180,15 @@ export default function GeneratePage() {
       const activeStyleRefs = styleRefs
         .filter((r): r is StyleReference => r !== null && !!r.uploadedUrl);
 
+      // Собираем LoRA items для слотов у которых LoRA обучена
+      const loraItems: LoRAItem[] = Object.entries(clothing)
+        .filter(([, item]) => item.loraStatus === "ready" && item.loraUrl && item.triggerWord)
+        .map(([slot, item]) => ({
+          slot: slot as ClothingSlot,
+          loraUrl: item.loraUrl!,
+          triggerWord: item.triggerWord!,
+        }));
+
       const res = await fetch("/api/generate-lookbook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,6 +197,7 @@ export default function GeneratePage() {
           model: modelParams,
           background: bgParams,
           styleReferences: activeStyleRefs.length > 0 ? activeStyleRefs : undefined,
+          loraItems: loraItems.length > 0 ? loraItems : undefined,
         }),
       });
 
@@ -239,7 +320,7 @@ export default function GeneratePage() {
         {/* Step content */}
         <div className="p-6">
           {wizardStep === "clothing" && (
-            <ClothingUploader clothing={clothing} onChange={updateClothing} />
+            <ClothingUploader clothing={clothing} onChange={updateClothing} onTrain={handleTrainLora} />
           )}
           {wizardStep === "model" && (
             <ModelConfigurator params={modelParams} onChange={setModelParams} />

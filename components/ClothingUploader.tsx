@@ -3,7 +3,7 @@
 import { useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
-import { X, Upload, Shirt, HardHat, Footprints, Glasses, Plus } from "lucide-react";
+import { X, Upload, Shirt, HardHat, Footprints, Glasses, Plus, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClothingSlot, ClothingItem } from "@/types/lookbook";
 
@@ -48,6 +48,7 @@ const SLOTS: SlotConfig[] = [
 interface Props {
   clothing: Partial<Record<ClothingSlot, ClothingItem>>;
   onChange: (slot: ClothingSlot, item: ClothingItem | null) => void;
+  onTrain?: (slot: ClothingSlot) => void;
 }
 
 function SlotDropzone({
@@ -57,6 +58,7 @@ function SlotDropzone({
   onRemove,
   onExtraUpload,
   onReorder,
+  onTrain,
 }: {
   config: SlotConfig;
   item?: ClothingItem;
@@ -64,6 +66,7 @@ function SlotDropzone({
   onRemove: () => void;
   onExtraUpload: (files: File[]) => void;
   onReorder: (newMainUrl: string) => void;
+  onTrain?: () => void;
 }) {
   const extraInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,7 +81,7 @@ function SlotDropzone({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { "image/*": [".jpg", ".jpeg", ".png", ".webp"] },
-    maxFiles: 3,
+    maxFiles: 10,
     disabled: !!item,
   });
 
@@ -87,10 +90,24 @@ function SlotDropzone({
     const isUploading = !item.uploadedUrl && !item.cleanUrl;
     const isProcessingBg = !!item.uploadedUrl && !item.cleanUrl;
     const extras = item.extraUploadedUrls ?? [];
-    const canAddExtra = extras.length < 2;
+    const canAddExtra = extras.length < 9;
+    const totalPhotos = (item.uploadedUrl ? 1 : 0) + extras.length;
+
+    const loraStatus = item.loraStatus ?? "idle";
+    const canTrain = loraStatus === "idle" || loraStatus === "error";
+    const isTraining = loraStatus === "training";
+    const loraReady = loraStatus === "ready";
 
     return (
       <div className="relative group rounded-xl overflow-hidden border-2 border-red-200 bg-red-50 flex flex-col">
+        {/* LoRA ready badge */}
+        {loraReady && (
+          <div className="absolute top-2 left-2 z-10 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+            <Zap size={9} />
+            LoRA
+          </div>
+        )}
+
         {/* Main photo */}
         <div className="relative aspect-square w-full">
           <Image
@@ -122,19 +139,19 @@ function SlotDropzone({
           )}
         </div>
 
-        {/* Bottom bar: label + all thumbnails + add button */}
+        {/* Bottom bar: label + thumbnails + add + train */}
         <div className="bg-black/60 px-2 py-1.5 flex items-center gap-1.5">
           <span className="text-white text-xs flex-1 truncate">{config.label}</span>
 
-          {/* Main photo thumbnail — marked as "1", not clickable */}
+          {/* Main photo thumbnail */}
           {item.uploadedUrl && (
-            <div className="relative w-7 h-7 rounded overflow-hidden border-2 border-white shrink-0" title="Главное фото (для примерки)">
+            <div className="relative w-7 h-7 rounded overflow-hidden border-2 border-white shrink-0" title="Главное фото">
               <Image src={item.uploadedUrl} alt="main" fill className="object-cover" unoptimized />
               <span className="absolute bottom-0 left-0 right-0 text-center text-white bg-black/60 text-[8px] leading-none py-px">1</span>
             </div>
           )}
 
-          {/* Extra thumbnails — clickable to promote to main */}
+          {/* Extra thumbnails */}
           {extras.map((url, i) => (
             <button
               key={i}
@@ -147,13 +164,13 @@ function SlotDropzone({
             </button>
           ))}
 
-          {/* Add extra button */}
+          {/* Add extra */}
           {canAddExtra && !isUploading && (
             <>
               <button
                 onClick={() => extraInputRef.current?.click()}
                 className="w-7 h-7 rounded border border-dashed border-white/40 flex items-center justify-center text-white/60 hover:border-white hover:text-white transition-colors shrink-0"
-                title="Добавить ракурс"
+                title={`Добавить фото (${totalPhotos}/10)`}
               >
                 <Plus size={12} />
               </button>
@@ -172,6 +189,34 @@ function SlotDropzone({
             </>
           )}
         </div>
+
+        {/* LoRA train button */}
+        {!isUploading && item.uploadedUrl && onTrain && (
+          <button
+            onClick={onTrain}
+            disabled={!canTrain && !isTraining}
+            className={cn(
+              "w-full py-1.5 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors",
+              loraReady
+                ? "bg-green-500 text-white cursor-default"
+                : isTraining
+                ? "bg-yellow-500/90 text-white cursor-default"
+                : loraStatus === "error"
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-gray-800 text-white hover:bg-gray-700"
+            )}
+          >
+            {loraReady ? (
+              <><Zap size={11} /> LoRA готова ({totalPhotos} фото)</>
+            ) : isTraining ? (
+              <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Тренировка…</>
+            ) : loraStatus === "error" ? (
+              <><Zap size={11} /> Повторить обучение</>
+            ) : (
+              <><Zap size={11} /> Обучить LoRA ({totalPhotos} фото)</>
+            )}
+          </button>
+        )}
       </div>
     );
   }
@@ -191,12 +236,12 @@ function SlotDropzone({
       <p className="text-sm font-medium text-gray-700">{config.label}</p>
       <p className="text-xs text-gray-400 mt-1 leading-tight">{config.hint}</p>
       <Upload size={14} className="mt-2 text-gray-300" />
-      <p className="text-xs text-gray-300 mt-1">до 3 фото сразу</p>
+      <p className="text-xs text-gray-300 mt-1">до 10 фото сразу</p>
     </div>
   );
 }
 
-export function ClothingUploader({ clothing, onChange }: Props) {
+export function ClothingUploader({ clothing, onChange, onTrain }: Props) {
   async function handleUpload(slot: ClothingSlot, file: File, extraFiles?: File[]) {
     const originalUrl = URL.createObjectURL(file);
     onChange(slot, { slot, originalUrl });
@@ -204,10 +249,9 @@ export function ClothingUploader({ clothing, onChange }: Props) {
     try {
       const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
 
-      // Загружаем основной файл и экстра-файлы параллельно
       const [uploadedUrl, ...extraUploadedUrls] = await Promise.all([
         resizeImage(file, 1024).then(uploadFileToFal),
-        ...(extraFiles ?? []).slice(0, 2).map((f) =>
+        ...(extraFiles ?? []).slice(0, 9).map((f) =>
           resizeImage(f, 1024).then(uploadFileToFal)
         ),
       ]);
@@ -243,7 +287,6 @@ export function ClothingUploader({ clothing, onChange }: Props) {
       .filter((u) => u !== newMainUrl)
       .concat(oldMainUrl);
 
-    // Сразу показываем новый порядок, cleanUrl сбрасываем — нужна новая обработка
     onChange(slot, {
       ...item,
       originalUrl: newMainUrl,
@@ -252,7 +295,6 @@ export function ClothingUploader({ clothing, onChange }: Props) {
       extraUploadedUrls: newExtras.length > 0 ? newExtras : undefined,
     });
 
-    // Перезапускаем удаление фона для нового главного фото
     try {
       const res = await fetch("/api/remove-background", {
         method: "POST",
@@ -278,9 +320,9 @@ export function ClothingUploader({ clothing, onChange }: Props) {
     const item = clothing[slot];
     if (!item) return;
     const existing = item.extraUploadedUrls ?? [];
-    const slots = 2 - existing.length;
-    if (slots <= 0) return;
-    const toUpload = files.slice(0, slots);
+    const slotsLeft = 9 - existing.length;
+    if (slotsLeft <= 0) return;
+    const toUpload = files.slice(0, slotsLeft);
     try {
       const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
       const uploaded = await Promise.all(
@@ -302,7 +344,8 @@ export function ClothingUploader({ clothing, onChange }: Props) {
       </h2>
       <p className="text-sm text-gray-500">
         Додайте хоча б один елемент. Фон видалиться автоматично.
-        Натисніть <strong>+</strong> у слоті щоб додати додатковий ракурс.
+        Натисніть <strong>+</strong> щоб додати більше фото (до 10), потім{" "}
+        <strong>Обучить LoRA</strong> для точного відтворення.
       </p>
       <div className="grid grid-cols-2 gap-4">
         {SLOTS.map((config) => (
@@ -314,6 +357,7 @@ export function ClothingUploader({ clothing, onChange }: Props) {
             onRemove={() => onChange(config.slot, null)}
             onExtraUpload={(files) => handleExtraUpload(config.slot, files)}
             onReorder={(url) => handleReorder(config.slot, url)}
+            onTrain={onTrain ? () => onTrain(config.slot) : undefined}
           />
         ))}
       </div>

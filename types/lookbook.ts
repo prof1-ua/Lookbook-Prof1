@@ -12,6 +12,14 @@ export interface ClothingItem {
   cleanUrl?: string;
   /** Extra FAL URLs for additional angles (used as FLUX reference images) */
   extraUploadedUrls?: string[];
+  /** LoRA trained weights URL */
+  loraUrl?: string;
+  /** Unique trigger word used in generation prompts */
+  triggerWord?: string;
+  /** Training job state */
+  loraStatus?: "idle" | "training" | "ready" | "error";
+  /** FAL queue request ID for polling */
+  loraRequestId?: string;
 }
 
 // ─── Model Parameters ──────────────────────────────────────────────────────────
@@ -132,11 +140,19 @@ export interface StyleReference {
 
 // ─── Full Lookbook Request ────────────────────────────────────────────────────
 
+export interface LoRAItem {
+  slot: ClothingSlot;
+  loraUrl: string;
+  triggerWord: string;
+}
+
 export interface LookbookRequest {
   clothing: Partial<Record<ClothingSlot, ClothingItem>>;
   model: ModelParams;
   background: BackgroundParams;
   styleReferences?: StyleReference[];
+  /** When present, use LoRA generation instead of FASHN for these slots */
+  loraItems?: LoRAItem[];
 }
 
 // ─── API Response shapes ──────────────────────────────────────────────────────

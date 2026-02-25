@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   removeBackground,
   generateBaseModel,
+  generateWithLoRAs,
   applyFashnTryOn,
   finalizeScene,
   fixAccessoryWithKontext,
@@ -11,7 +12,7 @@ import type { LookbookRequest, ClothingSlot } from "@/types/lookbook";
 
 export async function POST(req: NextRequest) {
   try {
-    const { clothing, model, background, styleReferences }: LookbookRequest = await req.json();
+    const { clothing, model, background, styleReferences, loraItems }: LookbookRequest = await req.json();
 
     // ── Шаг 1: Удаляем фон со всей одежды параллельно ────────────────────────
     const slots: ClothingSlot[] = ["top", "bottom", "hat", "shoes", "gloves", "glasses"];
@@ -29,36 +30,38 @@ export async function POST(req: NextRequest) {
       })
     );
 
-    // ── Шаг 2: Генерируем базовую модель в нейтральной позе ───────────────────
-    // Нейтральная поза критически важна для FASHN — так примерка получается чище
-    let currentImageUrl = await generateBaseModel(model);
+    let currentImageUrl: string;
 
-    // ── Шаг 3: FASHN примерка — низ → верх → обувь ───────────────────────────
-    // Порядок важен: низ первым (верх перекрывает талию), обувь последней (ноги).
-    // Перчатки, очки, кепка — только через FLUX reference (FASHN путает аксессуары).
-    if (cleanedImages.bottom) {
-      currentImageUrl = await applyFashnTryOn(
-        currentImageUrl,
-        cleanedImages.bottom,
-        "bottoms"
-      );
-    }
+    // ── Шаги 2-3: LoRA (если доступна) или FASHN ─────────────────────────────
+    if (loraItems && loraItems.length > 0) {
+      // LoRA путь: FLUX генерирует модель сразу в нужной одежде
+      // Точнее воспроизводит товар чем FASHN + не теряет паттерны
+      currentImageUrl = await generateWithLoRAs(model, loraItems);
 
-    if (cleanedImages.top) {
-      currentImageUrl = await applyFashnTryOn(
-        currentImageUrl,
-        cleanedImages.top,
-        "tops"
-      );
-    }
+      // Для слотов без LoRA — докидываем через FASHN поверх
+      const loraSlots = new Set(loraItems.map((l) => l.slot));
+      if (cleanedImages.bottom && !loraSlots.has("bottom")) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.bottom, "bottoms");
+      }
+      if (cleanedImages.top && !loraSlots.has("top")) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.top, "tops");
+      }
+      if (cleanedImages.shoes && !loraSlots.has("shoes")) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.shoes, "auto");
+      }
+    } else {
+      // FASHN путь: как раньше
+      currentImageUrl = await generateBaseModel(model);
 
-    // Обувь через FASHN — точнее воспроизводит цвет, подошву, шнуровку чем FLUX
-    if (cleanedImages.shoes) {
-      currentImageUrl = await applyFashnTryOn(
-        currentImageUrl,
-        cleanedImages.shoes,
-        "auto"
-      );
+      if (cleanedImages.bottom) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.bottom, "bottoms");
+      }
+      if (cleanedImages.top) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.top, "tops");
+      }
+      if (cleanedImages.shoes) {
+        currentImageUrl = await applyFashnTryOn(currentImageUrl, cleanedImages.shoes, "auto");
+      }
     }
 
     // ── Шаг 4: Kontext — меняем только фон и позу, одежда не трогается ─────────

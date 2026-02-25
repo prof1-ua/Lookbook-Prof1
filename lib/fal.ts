@@ -1,4 +1,5 @@
 import { fal } from "@fal-ai/client";
+import JSZip from "jszip";
 import type {
   ModelParams,
   BackgroundParams,
@@ -9,6 +10,7 @@ import type {
   Pose,
   Accessory,
   StyleReference,
+  LoRAItem,
 } from "@/types/lookbook";
 
 fal.config({ credentials: process.env.FAL_KEY! });
@@ -268,4 +270,112 @@ export async function upscaleImage(imageUrl: string): Promise<string> {
   }) as { data: { image: { url: string } } };
 
   return result.data.image.url;
+}
+
+// ─── LoRA: Обучение на конкретном товаре ─────────────────────────────────────
+// 1. Скачиваем все фото товара
+// 2. Пакуем в ZIP и загружаем в FAL storage
+// 3. Отправляем задачу в очередь → возвращаем request_id (тренировка ~5-10 мин)
+
+export async function submitLoRATraining(
+  imageUrls: string[],
+  triggerWord: string
+): Promise<string> {
+  const zip = new JSZip();
+
+  await Promise.all(
+    imageUrls.map(async (url, i) => {
+      const response = await fetch(url);
+      const buffer = await response.arrayBuffer();
+      const ext = url.split("?")[0].split(".").pop() || "jpg";
+      zip.file(`image_${String(i + 1).padStart(2, "0")}.${ext}`, buffer);
+    })
+  );
+
+  const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+  const zipBlob = new Blob([zipBuffer], { type: "application/zip" });
+  const zipFile = new File([zipBlob], "training_images.zip", { type: "application/zip" });
+  const zipUrl = await fal.storage.upload(zipFile);
+
+  const { request_id } = await fal.queue.submit("fal-ai/flux/dev/lora/training", {
+    input: {
+      images_data_url: zipUrl,
+      trigger_word: triggerWord,
+      steps: 1000,
+      lora_rank: 16,
+      learning_rate: 0.0001,
+      batch_size: 1,
+      resolution: "512,768,1024",
+      autocaption: true,
+    },
+  });
+
+  return request_id;
+}
+
+// ─── LoRA: Проверка статуса тренировки ───────────────────────────────────────
+
+export async function getLoRATrainingResult(
+  requestId: string
+): Promise<{ status: "training" | "done" | "failed"; loraUrl?: string }> {
+  const status = await fal.queue.status("fal-ai/flux/dev/lora/training", {
+    requestId,
+    logs: false,
+  });
+
+  if (status.status === "COMPLETED") {
+    const result = await fal.queue.result("fal-ai/flux/dev/lora/training", {
+      requestId,
+    }) as { data: { diffusers_lora_file?: { url: string }; lora?: { url: string } } };
+    const loraUrl =
+      result.data?.diffusers_lora_file?.url ?? result.data?.lora?.url;
+    if (!loraUrl) throw new Error("LoRA URL not found in result");
+    return { status: "done", loraUrl };
+  }
+
+  if (status.status === "FAILED") {
+    return { status: "failed" };
+  }
+
+  return { status: "training" };
+}
+
+// ─── LoRA: Генерация модели с обученными LoRA (заменяет FASHN) ───────────────
+// Все LoRA активны одновременно, scale уменьшается при большом количестве LoRA
+// чтобы они не конфликтовали друг с другом.
+
+export async function generateWithLoRAs(
+  model: ModelParams,
+  loraItems: LoRAItem[]
+): Promise<string> {
+  const gender = model.gender === "female" ? "young woman" : "young man";
+  const clothingDesc = loraItems.map((item) => item.triggerWord).join(", ");
+  const loraScale = Math.max(0.5, 0.9 - (loraItems.length - 1) * 0.12);
+
+  const prompt = [
+    `Professional fashion model, ${gender}`,
+    `${model.height}cm tall`,
+    BODY_TYPE_MAP[model.bodyType],
+    SKIN_MAP[model.skinTone],
+    `${model.hairColor} ${model.hairLength} hair`,
+    `wearing ${clothingDesc}`,
+    "standing straight, neutral T-pose, arms slightly away from body",
+    "full body shot head to toe, whole figure visible",
+    "plain light grey seamless studio background",
+    "front view, centered in frame",
+    "professional fashion photography lighting",
+    "sharp focus, 8k",
+  ].join(", ");
+
+  const result = await fal.run("fal-ai/flux/dev/lora", {
+    input: {
+      prompt,
+      loras: loraItems.map((item) => ({ path: item.loraUrl, scale: loraScale })),
+      image_size: "portrait_4_3",
+      num_inference_steps: 30,
+      num_images: 1,
+    },
+  }) as { data: { images: Array<{ url: string }> } };
+
+  return result.data.images[0].url;
 }
