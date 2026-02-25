@@ -220,12 +220,11 @@ export async function finalizeScene(
     input: {
       image_urls: imageUrls,
       prompt,
-      image_size: "portrait_4_3",
       num_inference_steps: 40,
       guidance_scale: 2.5,
       safety_tolerance: "6",
       output_format: "jpeg",
-    },
+    } as any,
   }) as { data: { images: Array<{ url: string }> } };
 
   return result.data.images[0].url;
@@ -245,12 +244,11 @@ export async function fixAccessoryWithKontext(
     input: {
       image_urls: [imageUrl, referenceUrl],
       prompt,
-      image_size: "portrait_4_3",
       num_inference_steps: 40,
       guidance_scale: 6,  // было 3.5 — выше = точнее воспроизводит reference
       safety_tolerance: "6",
       output_format: "jpeg",
-    },
+    } as any,
   }) as { data: { images: Array<{ url: string }> } };
   return result.data.images[0].url;
 }
@@ -292,7 +290,7 @@ export async function submitLoRATraining(
     })
   );
 
-  const zipBuffer = await zip.generateAsync({ type: "nodebuffer" });
+  const zipBuffer = await zip.generateAsync({ type: "arraybuffer" });
   const zipBlob = new Blob([zipBuffer], { type: "application/zip" });
   const zipFile = new File([zipBlob], "training_images.zip", { type: "application/zip" });
   const zipUrl = await fal.storage.upload(zipFile);
@@ -333,10 +331,7 @@ export async function getLoRATrainingResult(
     return { status: "done", loraUrl };
   }
 
-  if (status.status === "FAILED") {
-    return { status: "failed" };
-  }
-
+  // IN_QUEUE | IN_PROGRESS → ещё тренируется
   return { status: "training" };
 }
 
