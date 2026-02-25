@@ -21,13 +21,13 @@ import type {
 // ─── Defaults ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_MODEL: ModelParams = {
-  gender: "female",
-  height: 170,
+  gender: "male",
+  height: 180,
   bodyType: "average",
   bustSize: "M",
   skinTone: "light",
-  hairColor: "brunette",
-  hairLength: "long",
+  hairColor: "black",
+  hairLength: "short",
   pose: "standing",
   accessory: "none",
 };
