@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
-import { X, Upload, Shirt, HardHat, Footprints } from "lucide-react";
+import { X, Upload, Shirt, HardHat, Footprints, Glasses } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClothingSlot, ClothingItem } from "@/types/lookbook";
 
@@ -27,6 +27,30 @@ function PantsIcon({ size = 24, className = "" }: { size?: number | string; clas
   );
 }
 
+// Кастомна SVG-іконка рукавичок
+function GlovesIcon({ size = 24, className = "" }: { size?: number | string; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M8 2h2v7H8z" />
+      <path d="M10 2h2v6h-2z" />
+      <path d="M12 2h2v5h-2z" />
+      <path d="M14 4h2v3h-2z" />
+      <path d="M6 6h2v3H6z" />
+      <path d="M6 9c0 0-2 1-2 4v4a3 3 0 0 0 6 0v-6H6z" />
+    </svg>
+  );
+}
+
 interface SlotConfig {
   slot: ClothingSlot;
   label: string;
@@ -35,10 +59,12 @@ interface SlotConfig {
 }
 
 const SLOTS: SlotConfig[] = [
-  { slot: "top",    label: "Верх",           Icon: Shirt,     hint: "Футболка, рубашка, куртка…" },
-  { slot: "bottom", label: "Низ",            Icon: PantsIcon, hint: "Брюки, джинсы, шорты…" },
-  { slot: "hat",    label: "Головной убор",  Icon: HardHat,   hint: "Каска, кепка, берет…" },
-  { slot: "shoes",  label: "Обувь",          Icon: Footprints, hint: "Берцы, кроссовки, ботинки…" },
+  { slot: "top",     label: "Верх",          Icon: Shirt,      hint: "Футболка, рубашка, куртка…" },
+  { slot: "bottom",  label: "Низ",           Icon: PantsIcon,  hint: "Брюки, джинсы, шорты…" },
+  { slot: "hat",     label: "Головной убор", Icon: HardHat,    hint: "Каска, кепка, берет…" },
+  { slot: "shoes",   label: "Обувь",         Icon: Footprints, hint: "Берцы, кроссовки, ботинки…" },
+  { slot: "gloves",  label: "Перчатки",      Icon: GlovesIcon, hint: "Тактические, зимние…" },
+  { slot: "glasses", label: "Очки",          Icon: Glasses,    hint: "Тактические, солнцезащитные…" },
 ];
 
 interface Props {

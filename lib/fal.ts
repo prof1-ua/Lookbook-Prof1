@@ -5,6 +5,7 @@ import type {
   LocationPreset,
   TimeOfDay,
   Weather,
+  SceneProp,
   Pose,
   Accessory,
 } from "@/types/lookbook";
@@ -20,7 +21,7 @@ export async function removeBackground(imageUrl: string): Promise<string> {
   return result.data.image.url;
 }
 
-// ─── Шаг 2: Генерация базовой модели (FLUX.1 Schnell) ────────────────────────
+// ─── Шаг 2: Генерация базовой модели (FLUX.1 Dev) ────────────────────────────
 // Нейтральная поза, студийный фон — идеальная "канва" для примерки в FASHN
 
 const BODY_TYPE_MAP: Record<string, string> = {
@@ -65,11 +66,11 @@ export async function generateBaseModel(params: ModelParams): Promise<string> {
     "sharp focus, 8k",
   ].join(", ");
 
-  const result = await fal.run("fal-ai/flux/schnell", {
+  const result = await fal.run("fal-ai/flux/dev", {
     input: {
       prompt,
       image_size: "portrait_4_3",
-      num_inference_steps: 4,
+      num_inference_steps: 28,
       num_images: 1,
     },
   }) as { data: { images: Array<{ url: string }> } };
@@ -101,7 +102,7 @@ export async function applyFashnTryOn(
   return result.data.images[0].url;
 }
 
-// ─── Шаг 4: Финализация — фон + шляпа + обувь (FLUX.2 [pro] edit) ────────────
+// ─── Шаг 4: Финализация — фон + шляпа + обувь + очки (FLUX.2 [pro] edit) ─────
 
 const POSE_PROMPTS: Record<Pose, string> = {
   standing: "standing naturally, confident pose, hands relaxed at sides",
@@ -143,6 +144,19 @@ const WEATHER_PROMPTS: Record<Weather, string> = {
   sunny: "clear sunny weather, crisp shadows",
   cloudy: "overcast soft diffused light, even illumination, no harsh shadows",
   foggy: "atmospheric misty fog, soft dreamy mood, reduced visibility in distance",
+  rain: "heavy rain, wet ground reflections, rain drops falling, dramatic stormy atmosphere",
+  snow: "heavy snowfall, snow covered ground, snowflakes in air, crisp winter atmosphere",
+  wind: "strong gusting wind, dynamic wind-blown hair and clothing, dramatic weather",
+};
+
+const SCENE_PROP_PROMPTS: Record<SceneProp, string> = {
+  none: "",
+  military_vehicle: "military tactical armored vehicle parked in the background",
+  suv: "large tactical SUV parked nearby in the scene",
+  motorcycle: "heavy military-style motorcycle parked in the scene",
+  bicycle: "bicycle leaning against a surface in the background",
+  yacht: "luxury motor yacht moored at dock visible behind the model",
+  helicopter: "military helicopter on the ground visible in the background",
 };
 
 export async function finalizeScene(
@@ -152,6 +166,7 @@ export async function finalizeScene(
   shoesUrl?: string,
   topUrl?: string,
   bottomUrl?: string,
+  glassesUrl?: string,
   pose?: Pose,
   accessory?: Accessory
 ): Promise<string> {
@@ -176,6 +191,10 @@ export async function finalizeScene(
     imageUrls.push(shoesUrl);
     garmentRefs.push(`shoes/footwear from image ${imageUrls.length}`);
   }
+  if (glassesUrl) {
+    imageUrls.push(glassesUrl);
+    garmentRefs.push(`eyewear/glasses from image ${imageUrls.length} — place on model's face`);
+  }
 
   const sceneDesc = background.customPrompt
     ? background.customPrompt
@@ -198,12 +217,17 @@ export async function finalizeScene(
     ? ` The model is ${ACCESSORY_PROMPTS[accessory]}.`
     : "";
 
+  const scenePropPart = background.sceneProp && background.sceneProp !== "none"
+    ? ` Scene includes: ${SCENE_PROP_PROMPTS[background.sceneProp]}.`
+    : "";
+
   const prompt =
     `Take the fashion model exactly from image 1 — preserve the person and all clothing details precisely.` +
     garmentPart +
     ` Replace the background with: ${sceneDesc}.` +
     posePart +
     accessoryPart +
+    scenePropPart +
     ` Matching realistic lighting and shadows.` +
     ` Professional fashion editorial photography, Vogue magazine quality, 85mm lens, shallow depth of field, 8k, photorealistic.`;
 

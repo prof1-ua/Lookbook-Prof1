@@ -1,6 +1,6 @@
 // ─── Clothing ─────────────────────────────────────────────────────────────────
 
-export type ClothingSlot = "top" | "bottom" | "hat" | "shoes";
+export type ClothingSlot = "top" | "bottom" | "hat" | "shoes" | "gloves" | "glasses";
 
 export interface ClothingItem {
   slot: ClothingSlot;
@@ -76,12 +76,22 @@ export type LocationPreset =
 
 export type TimeOfDay = "day" | "golden_hour" | "dusk";
 
-export type Weather = "sunny" | "cloudy" | "foggy";
+export type Weather = "sunny" | "cloudy" | "foggy" | "rain" | "snow" | "wind";
+
+export type SceneProp =
+  | "none"
+  | "military_vehicle"
+  | "suv"
+  | "motorcycle"
+  | "bicycle"
+  | "yacht"
+  | "helicopter";
 
 export interface BackgroundParams {
   location: LocationPreset;
   timeOfDay: TimeOfDay;
   weather: Weather;
+  sceneProp?: SceneProp;
   /** Optional free-text override */
   customPrompt?: string;
 }

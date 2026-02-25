@@ -34,6 +34,7 @@ const DEFAULT_BG: BackgroundParams = {
   location: "forest",
   timeOfDay: "golden_hour",
   weather: "sunny",
+  sceneProp: "none",
 };
 
 // ─── Stepper ───────────────────────────────────────────────────────────────────
