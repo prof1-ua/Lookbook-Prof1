@@ -10,6 +10,8 @@ export interface ClothingItem {
   uploadedUrl?: string;
   /** URL after background removal */
   cleanUrl?: string;
+  /** Extra FAL URLs for additional angles (used as FLUX reference images) */
+  extraUploadedUrls?: string[];
 }
 
 // ─── Model Parameters ──────────────────────────────────────────────────────────
@@ -117,12 +119,24 @@ export interface GenerationState {
   error?: string;
 }
 
+// ─── Style References ─────────────────────────────────────────────────────────
+
+export interface StyleReference {
+  /** Blob URL for browser preview */
+  originalUrl: string;
+  /** FAL storage URL — used server-side */
+  uploadedUrl?: string;
+  /** What to take from this image: pose, lighting, style, etc. */
+  description: string;
+}
+
 // ─── Full Lookbook Request ────────────────────────────────────────────────────
 
 export interface LookbookRequest {
   clothing: Partial<Record<ClothingSlot, ClothingItem>>;
   model: ModelParams;
   background: BackgroundParams;
+  styleReferences?: StyleReference[];
 }
 
 // ─── API Response shapes ──────────────────────────────────────────────────────

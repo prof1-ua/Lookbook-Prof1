@@ -10,7 +10,7 @@ import type { LookbookRequest, ClothingSlot } from "@/types/lookbook";
 
 export async function POST(req: NextRequest) {
   try {
-    const { clothing, model, background }: LookbookRequest = await req.json();
+    const { clothing, model, background, styleReferences }: LookbookRequest = await req.json();
 
     // ── Шаг 1: Удаляем фон со всей одежды параллельно ────────────────────────
     const slots: ClothingSlot[] = ["top", "bottom", "hat", "shoes", "gloves", "glasses"];
@@ -60,18 +60,27 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Шаг 4: FLUX.2 — финализация сцены ────────────────────────────────────
-    // Берём одетую модель из FASHN, переносим на локацию.
-    // Шляпа, обувь, очки передаются как reference-фото — FLUX добавляет их органично.
+    // Собираем доп. углы одежды из всех слотов
+    const extraReferenceUrls: string[] = [];
+    for (const slot of slots) {
+      const item = clothing[slot];
+      if (item?.extraUploadedUrls) {
+        extraReferenceUrls.push(...item.extraUploadedUrls);
+      }
+    }
+
     const finalizedUrl = await finalizeScene(
       currentImageUrl,
       background,
       cleanedImages.hat,
       cleanedImages.shoes,
-      cleanedImages.top,     // reference для верха — FLUX точнее сохранит принт/цвет
-      cleanedImages.bottom,  // reference для низа
-      cleanedImages.glasses, // reference для очков — FLUX накладывает на лицо
+      cleanedImages.top,
+      cleanedImages.bottom,
+      cleanedImages.glasses,
       model.pose,
-      model.accessory
+      model.accessory,
+      extraReferenceUrls.length > 0 ? extraReferenceUrls : undefined,
+      styleReferences
     );
 
     // ── Шаг 5: Апскейл ────────────────────────────────────────────────────────

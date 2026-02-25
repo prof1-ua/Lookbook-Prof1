@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ClothingUploader } from "@/components/ClothingUploader";
 import { ModelConfigurator } from "@/components/ModelConfigurator";
 import { BackgroundSelector } from "@/components/BackgroundSelector";
+import { StyleReferences } from "@/components/StyleReferences";
 import { GenerationProgress } from "@/components/GenerationProgress";
 import { LookbookResult } from "@/components/LookbookResult";
 import { P1GIcon } from "@/components/P1GIcon";
@@ -14,6 +15,7 @@ import type {
   ModelParams,
   BackgroundParams,
   GenerationStep,
+  StyleReference,
 } from "@/types/lookbook";
 
 // ─── Defaults ──────────────────────────────────────────────────────────────────
@@ -43,9 +45,10 @@ const WIZARD_STEPS = [
   { id: "clothing", label: "Одежда", short: "1" },
   { id: "model", label: "Модель", short: "2" },
   { id: "background", label: "Локация", short: "3" },
+  { id: "style", label: "Стиль", short: "4" },
 ];
 
-type WizardStep = "clothing" | "model" | "background";
+type WizardStep = "clothing" | "model" | "background" | "style";
 
 export default function GeneratePage() {
   // Wizard state
@@ -53,6 +56,7 @@ export default function GeneratePage() {
   const [clothing, setClothing] = useState<Partial<Record<ClothingSlot, ClothingItem>>>({});
   const [modelParams, setModelParams] = useState<ModelParams>(DEFAULT_MODEL);
   const [bgParams, setBgParams] = useState<BackgroundParams>(DEFAULT_BG);
+  const [styleRefs, setStyleRefs] = useState<(StyleReference | null)[]>([null, null, null]);
 
   // Generation state
   const [genStep, setGenStep] = useState<GenerationStep>("idle");
@@ -102,6 +106,9 @@ export default function GeneratePage() {
       setGenMessage("FASHN примеряет одежду — точное воспроизведение деталей…");
 
       // Запускаем весь пайплайн на сервере
+      const activeStyleRefs = styleRefs
+        .filter((r): r is StyleReference => r !== null && !!r.uploadedUrl);
+
       const res = await fetch("/api/generate-lookbook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,6 +116,7 @@ export default function GeneratePage() {
           clothing: clothingPayload,
           model: modelParams,
           background: bgParams,
+          styleReferences: activeStyleRefs.length > 0 ? activeStyleRefs : undefined,
         }),
       });
 
@@ -140,6 +148,7 @@ export default function GeneratePage() {
     setClothing({});
     setModelParams(DEFAULT_MODEL);
     setBgParams(DEFAULT_BG);
+    setStyleRefs([null, null, null]);
     setGenStep("idle");
     setResultUrl(null);
     setError(null);
@@ -230,6 +239,9 @@ export default function GeneratePage() {
           )}
           {wizardStep === "background" && (
             <BackgroundSelector params={bgParams} onChange={setBgParams} />
+          )}
+          {wizardStep === "style" && (
+            <StyleReferences refs={styleRefs} onChange={setStyleRefs} />
           )}
 
           {error && (

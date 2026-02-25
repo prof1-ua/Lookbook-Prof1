@@ -132,6 +132,9 @@ function SlotDropzone({
         )}
         <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
           {config.label}
+          {item.extraUploadedUrls && item.extraUploadedUrls.length > 0 && (
+            <span className="ml-1 text-gray-300">+{item.extraUploadedUrls.length}</span>
+          )}
         </div>
       </div>
     );
@@ -182,6 +185,21 @@ export function ClothingUploader({ clothing, onChange }: Props) {
     }
   }
 
+  async function handleExtraUpload(slot: ClothingSlot, file: File) {
+    const item = clothing[slot];
+    if (!item) return;
+    const existing = item.extraUploadedUrls ?? [];
+    if (existing.length >= 2) return; // максимум 2 доп. фото
+    try {
+      const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
+      const resized = await resizeImage(file, 1024);
+      const uploadedUrl = await uploadFileToFal(resized);
+      onChange(slot, { ...item, extraUploadedUrls: [...existing, uploadedUrl] });
+    } catch {
+      // silently ignore
+    }
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-800">
@@ -201,6 +219,41 @@ export function ClothingUploader({ clothing, onChange }: Props) {
           />
         ))}
       </div>
+
+      {/* Доп. ракурсы для заполненных слотов */}
+      {SLOTS.some((c) => clothing[c.slot]) && (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            Доп. ракурсы (опционально, до 2 на слот)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SLOTS.filter((c) => clothing[c.slot]).map((config) => {
+              const item = clothing[config.slot]!;
+              const count = item.extraUploadedUrls?.length ?? 0;
+              if (count >= 2) return null;
+              return (
+                <label
+                  key={config.slot}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-dashed border-gray-300 text-xs text-gray-500 cursor-pointer hover:border-red-400 hover:text-red-500 transition-colors"
+                >
+                  <Upload size={11} />
+                  {config.label}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleExtraUpload(config.slot, f);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

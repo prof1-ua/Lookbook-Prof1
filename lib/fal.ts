@@ -8,6 +8,7 @@ import type {
   SceneProp,
   Pose,
   Accessory,
+  StyleReference,
 } from "@/types/lookbook";
 
 fal.config({ credentials: process.env.FAL_KEY! });
@@ -168,7 +169,9 @@ export async function finalizeScene(
   bottomUrl?: string,
   glassesUrl?: string,
   pose?: Pose,
-  accessory?: Accessory
+  accessory?: Accessory,
+  extraReferenceUrls?: string[],      // доп. углы одежды
+  styleReferences?: StyleReference[]  // пользовательские референсы
 ): Promise<string> {
   // image 1 — одетая модель из FASHN (основа)
   const imageUrls: string[] = [dressedModelUrl];
@@ -196,6 +199,25 @@ export async function finalizeScene(
     garmentRefs.push(`eyewear/glasses from image ${imageUrls.length} — place on model's face`);
   }
 
+  // Доп. углы одежды — только как reference для FLUX (не для FASHN)
+  if (extraReferenceUrls) {
+    for (const url of extraReferenceUrls) {
+      imageUrls.push(url);
+      garmentRefs.push(`additional garment angle from image ${imageUrls.length}`);
+    }
+  }
+
+  // Стиль-референсы с описанием пользователя
+  const styleRefPromptParts: string[] = [];
+  if (styleReferences) {
+    for (const ref of styleReferences) {
+      if (ref.uploadedUrl && ref.description) {
+        imageUrls.push(ref.uploadedUrl);
+        styleRefPromptParts.push(`From image ${imageUrls.length}: ${ref.description}`);
+      }
+    }
+  }
+
   const sceneDesc = background.customPrompt
     ? background.customPrompt
     : [
@@ -221,6 +243,10 @@ export async function finalizeScene(
     ? ` Scene includes: ${SCENE_PROP_PROMPTS[background.sceneProp]}.`
     : "";
 
+  const styleRefPart = styleRefPromptParts.length > 0
+    ? ` Style references: ${styleRefPromptParts.join(". ")}.`
+    : "";
+
   const prompt =
     `Take the fashion model exactly from image 1 — preserve the person and all clothing details precisely.` +
     garmentPart +
@@ -228,6 +254,7 @@ export async function finalizeScene(
     posePart +
     accessoryPart +
     scenePropPart +
+    styleRefPart +
     ` Matching realistic lighting and shadows.` +
     ` Professional fashion editorial photography, Vogue magazine quality, 85mm lens, shallow depth of field, 8k, photorealistic.`;
 
