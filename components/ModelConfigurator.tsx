@@ -1,6 +1,6 @@
 "use client";
 
-import type { ModelParams, Gender, BodyType, SkinTone, HairColor, HairLength, BustSize, Pose, Accessory } from "@/types/lookbook";
+import type { ModelParams, Gender, BodyType, SkinTone, HairColor, HairLength, BustSize, Pose } from "@/types/lookbook";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -171,18 +171,6 @@ export function ModelConfigurator({ params, onChange }: Props) {
         />
       </Field>
 
-      <Field label="Предмет в руках">
-        <Chips<Accessory>
-          options={[
-            { value: "none", label: "Ничего" },
-            { value: "ak47", label: "АК-47" },
-            { value: "glock", label: "Glock" },
-            { value: "tactical_backpack", label: "Рюкзак 5.11" },
-          ]}
-          value={params.accessory}
-          onChange={(v) => update("accessory", v)}
-        />
-      </Field>
     </div>
   );
 }
