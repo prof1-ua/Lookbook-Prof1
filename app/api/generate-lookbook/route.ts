@@ -32,9 +32,10 @@ export async function POST(req: NextRequest) {
     // Нейтральная поза критически важна для FASHN — так примерка получается чище
     let currentImageUrl = await generateBaseModel(model);
 
-    // ── Шаг 3: FASHN примерка — сначала низ, потом верх, потом перчатки ───────
+    // ── Шаг 3: FASHN примерка — сначала низ, потом верх ──────────────────────
     // Порядок важен: FASHN лучше справляется когда низ применяется первым,
     // потому что верхняя одежда может перекрывать линию талии.
+    // Перчатки и очки — только через FLUX reference (FASHN путает их с одеждой).
     if (cleanedImages.bottom) {
       currentImageUrl = await applyFashnTryOn(
         currentImageUrl,
@@ -48,14 +49,6 @@ export async function POST(req: NextRequest) {
         currentImageUrl,
         cleanedImages.top,
         "tops"
-      );
-    }
-
-    if (cleanedImages.gloves) {
-      currentImageUrl = await applyFashnTryOn(
-        currentImageUrl,
-        cleanedImages.gloves,
-        "auto"
       );
     }
 
@@ -77,6 +70,7 @@ export async function POST(req: NextRequest) {
       cleanedImages.top,
       cleanedImages.bottom,
       cleanedImages.glasses,
+      cleanedImages.gloves,
       model.pose,
       model.accessory,
       extraReferenceUrls.length > 0 ? extraReferenceUrls : undefined,

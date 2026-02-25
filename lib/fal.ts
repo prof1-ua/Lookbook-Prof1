@@ -168,6 +168,7 @@ export async function finalizeScene(
   topUrl?: string,
   bottomUrl?: string,
   glassesUrl?: string,
+  glovesUrl?: string,
   pose?: Pose,
   accessory?: Accessory,
   extraReferenceUrls?: string[],      // доп. углы одежды
@@ -197,6 +198,10 @@ export async function finalizeScene(
   if (glassesUrl) {
     imageUrls.push(glassesUrl);
     garmentRefs.push(`eyewear/glasses from image ${imageUrls.length} — place on model's face`);
+  }
+  if (glovesUrl) {
+    imageUrls.push(glovesUrl);
+    garmentRefs.push(`gloves from image ${imageUrls.length} — place on model's hands only, do not affect any other garment`);
   }
 
   // Доп. углы одежды — только как reference для FLUX (не для FASHN)
