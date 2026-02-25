@@ -56,12 +56,14 @@ function SlotDropzone({
   onUpload,
   onRemove,
   onExtraUpload,
+  onReorder,
 }: {
   config: SlotConfig;
   item?: ClothingItem;
   onUpload: (main: File, extras?: File[]) => void;
   onRemove: () => void;
   onExtraUpload: (files: File[]) => void;
+  onReorder: (newMainUrl: string) => void;
 }) {
   const extraInputRef = useRef<HTMLInputElement>(null);
 
@@ -120,15 +122,29 @@ function SlotDropzone({
           )}
         </div>
 
-        {/* Bottom bar: label + extra thumbnails + add button */}
+        {/* Bottom bar: label + all thumbnails + add button */}
         <div className="bg-black/60 px-2 py-1.5 flex items-center gap-1.5">
           <span className="text-white text-xs flex-1 truncate">{config.label}</span>
 
-          {/* Extra thumbnails */}
-          {extras.map((url, i) => (
-            <div key={i} className="relative w-7 h-7 rounded overflow-hidden border border-white/30 shrink-0">
-              <Image src={url} alt={`ракурс ${i + 1}`} fill className="object-cover" unoptimized />
+          {/* Main photo thumbnail — marked as "1", not clickable */}
+          {item.uploadedUrl && (
+            <div className="relative w-7 h-7 rounded overflow-hidden border-2 border-white shrink-0" title="Главное фото (для примерки)">
+              <Image src={item.uploadedUrl} alt="main" fill className="object-cover" unoptimized />
+              <span className="absolute bottom-0 left-0 right-0 text-center text-white bg-black/60 text-[8px] leading-none py-px">1</span>
             </div>
+          )}
+
+          {/* Extra thumbnails — clickable to promote to main */}
+          {extras.map((url, i) => (
+            <button
+              key={i}
+              onClick={() => onReorder(url)}
+              className="relative w-7 h-7 rounded overflow-hidden border border-white/40 hover:border-white shrink-0 transition-colors"
+              title="Нажми чтобы сделать главным"
+            >
+              <Image src={url} alt={`ракурс ${i + 2}`} fill className="object-cover" unoptimized />
+              <span className="absolute bottom-0 left-0 right-0 text-center text-white/70 bg-black/40 text-[8px] leading-none py-px">{i + 2}</span>
+            </button>
           ))}
 
           {/* Add extra button */}
@@ -219,6 +235,45 @@ export function ClothingUploader({ clothing, onChange }: Props) {
     }
   }
 
+  async function handleReorder(slot: ClothingSlot, newMainUrl: string) {
+    const item = clothing[slot];
+    if (!item?.uploadedUrl) return;
+    const oldMainUrl = item.uploadedUrl;
+    const newExtras = (item.extraUploadedUrls ?? [])
+      .filter((u) => u !== newMainUrl)
+      .concat(oldMainUrl);
+
+    // Сразу показываем новый порядок, cleanUrl сбрасываем — нужна новая обработка
+    onChange(slot, {
+      ...item,
+      originalUrl: newMainUrl,
+      uploadedUrl: newMainUrl,
+      cleanUrl: undefined,
+      extraUploadedUrls: newExtras.length > 0 ? newExtras : undefined,
+    });
+
+    // Перезапускаем удаление фона для нового главного фото
+    try {
+      const res = await fetch("/api/remove-background", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: newMainUrl }),
+      });
+      if (res.ok) {
+        const { cleanUrl } = await res.json();
+        onChange(slot, {
+          ...item,
+          originalUrl: newMainUrl,
+          uploadedUrl: newMainUrl,
+          cleanUrl,
+          extraUploadedUrls: newExtras.length > 0 ? newExtras : undefined,
+        });
+      }
+    } catch {
+      // silently ignore
+    }
+  }
+
   async function handleExtraUpload(slot: ClothingSlot, files: File[]) {
     const item = clothing[slot];
     if (!item) return;
@@ -258,6 +313,7 @@ export function ClothingUploader({ clothing, onChange }: Props) {
             onUpload={(main, extras) => handleUpload(config.slot, main, extras)}
             onRemove={() => onChange(config.slot, null)}
             onExtraUpload={(files) => handleExtraUpload(config.slot, files)}
+            onReorder={(url) => handleReorder(config.slot, url)}
           />
         ))}
       </div>
