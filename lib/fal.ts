@@ -189,19 +189,19 @@ export async function finalizeScene(
   }
   if (hatUrl) {
     imageUrls.push(hatUrl);
-    garmentRefs.push(`headwear/hat from image ${imageUrls.length}`);
+    garmentRefs.push(`hat/headwear from image ${imageUrls.length} — place on model's head, copy EXACTLY: every logo, color, pattern, print, stitching, brim shape as shown`);
   }
   if (shoesUrl) {
     imageUrls.push(shoesUrl);
-    garmentRefs.push(`shoes/footwear from image ${imageUrls.length}`);
+    garmentRefs.push(`shoes from image ${imageUrls.length} — copy EXACTLY: same colorway, sole design, laces, brand markings, material finish`);
   }
   if (glassesUrl) {
     imageUrls.push(glassesUrl);
-    garmentRefs.push(`eyewear/glasses from image ${imageUrls.length} — place on model's face`);
+    garmentRefs.push(`eyewear from image ${imageUrls.length} — place on model's face, copy EXACTLY: frame color, shape, lens tint, temple design`);
   }
   if (glovesUrl) {
     imageUrls.push(glovesUrl);
-    garmentRefs.push(`gloves from image ${imageUrls.length} — place on model's hands only, do not affect any other garment`);
+    garmentRefs.push(`gloves from image ${imageUrls.length} — place on model's hands only, copy EXACTLY: color, material, cut, any logos or details, do not affect any other garment`);
   }
 
   // Доп. углы одежды — только как reference для FLUX (не для FASHN)
@@ -233,7 +233,7 @@ export async function finalizeScene(
 
   const garmentPart =
     garmentRefs.length > 0
-      ? ` Keep all clothing faithful to the reference images: ${garmentRefs.join(", ")} — preserve exact colors, prints, patterns, textures.`
+      ? ` CRITICAL — reproduce accessories with photographic exactness from reference images: ${garmentRefs.join("; ")}. DO NOT simplify, generalize or improvise any accessory detail. Every logo, print, color, texture must match the reference exactly.`
       : "";
 
   const posePart = pose && pose !== "standing"
