@@ -61,7 +61,7 @@ function SlotDropzone({
   item?: ClothingItem;
   onUpload: (file: File) => void;
   onRemove: () => void;
-  onExtraUpload: (file: File) => void;
+  onExtraUpload: (files: File[]) => void;
 }) {
   const extraInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,10 +142,11 @@ function SlotDropzone({
                 ref={extraInputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) onExtraUpload(f);
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length) onExtraUpload(files);
                   e.target.value = "";
                 }}
               />
@@ -201,16 +202,22 @@ export function ClothingUploader({ clothing, onChange }: Props) {
     }
   }
 
-  async function handleExtraUpload(slot: ClothingSlot, file: File) {
+  async function handleExtraUpload(slot: ClothingSlot, files: File[]) {
     const item = clothing[slot];
     if (!item) return;
     const existing = item.extraUploadedUrls ?? [];
-    if (existing.length >= 2) return;
+    const slots = 2 - existing.length;
+    if (slots <= 0) return;
+    const toUpload = files.slice(0, slots);
     try {
       const { uploadFileToFal, resizeImage } = await import("@/lib/utils");
-      const resized = await resizeImage(file, 1024);
-      const uploadedUrl = await uploadFileToFal(resized);
-      onChange(slot, { ...item, extraUploadedUrls: [...existing, uploadedUrl] });
+      const uploaded = await Promise.all(
+        toUpload.map(async (f) => {
+          const resized = await resizeImage(f, 1024);
+          return uploadFileToFal(resized);
+        })
+      );
+      onChange(slot, { ...item, extraUploadedUrls: [...existing, ...uploaded] });
     } catch {
       // silently ignore
     }
@@ -233,7 +240,7 @@ export function ClothingUploader({ clothing, onChange }: Props) {
             item={clothing[config.slot]}
             onUpload={(file) => handleUpload(config.slot, file)}
             onRemove={() => onChange(config.slot, null)}
-            onExtraUpload={(file) => handleExtraUpload(config.slot, file)}
+            onExtraUpload={(files) => handleExtraUpload(config.slot, files)}
           />
         ))}
       </div>
