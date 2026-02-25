@@ -61,28 +61,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── Шаг 4: FLUX.2 — финализация сцены ────────────────────────────────────
-    // Собираем доп. углы одежды из всех слотов
-    const extraReferenceUrls: string[] = [];
-    for (const slot of slots) {
-      const item = clothing[slot];
-      if (item?.extraUploadedUrls) {
-        extraReferenceUrls.push(...item.extraUploadedUrls);
-      }
-    }
-
+    // ── Шаг 4: Kontext — меняем только фон и позу, одежда не трогается ─────────
+    // Одежда уже на модели из FASHN — лишние reference-фото только путали модель.
     const finalizedUrl = await finalizeScene(
       currentImageUrl,
       background,
-      cleanedImages.hat,
-      cleanedImages.shoes,
-      cleanedImages.top,
-      cleanedImages.bottom,
-      cleanedImages.glasses,
-      cleanedImages.gloves,
       model.pose,
       model.accessory,
-      extraReferenceUrls.length > 0 ? extraReferenceUrls : undefined,
       styleReferences
     );
 

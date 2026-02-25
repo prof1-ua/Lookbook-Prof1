@@ -95,7 +95,9 @@ export async function applyFashnTryOn(
       category,
       mode: "quality",
       garment_photo_type: "auto",
-      segmentation_free: true,
+      // false = FASHN uses alpha channel from our birefnet-cleaned PNG
+      // → лучше сохраняет сложные паттерны (камуфляж, принты)
+      segmentation_free: false,
       output_format: "png",
     },
   }) as { data: { images: Array<{ url: string }> } };
@@ -163,62 +165,20 @@ const SCENE_PROP_PROMPTS: Record<SceneProp, string> = {
 export async function finalizeScene(
   dressedModelUrl: string,
   background: BackgroundParams,
-  hatUrl?: string,
-  shoesUrl?: string,
-  topUrl?: string,
-  bottomUrl?: string,
-  glassesUrl?: string,
-  glovesUrl?: string,
   pose?: Pose,
   accessory?: Accessory,
-  extraReferenceUrls?: string[],      // доп. углы одежды
-  styleReferences?: StyleReference[]  // пользовательские референсы
+  styleReferences?: StyleReference[]
 ): Promise<string> {
-  // image 1 — одетая модель из FASHN (основа)
+  // Kontext Multi — точечное редактирование: меняем только фон/позу,
+  // одежда из FASHN не трогается (не передаём лишних reference-фото одежды).
   const imageUrls: string[] = [dressedModelUrl];
-  const garmentRefs: string[] = [];
+  const stylePromptParts: string[] = [];
 
-  // Передаём оригинальные фото одежды как reference — FLUX точнее сохранит детали
-  if (topUrl) {
-    imageUrls.push(topUrl);
-    garmentRefs.push(`top/shirt garment from image ${imageUrls.length}`);
-  }
-  if (bottomUrl) {
-    imageUrls.push(bottomUrl);
-    garmentRefs.push(`bottom/pants garment from image ${imageUrls.length}`);
-  }
-  if (hatUrl) {
-    imageUrls.push(hatUrl);
-    garmentRefs.push(`hat/headwear from image ${imageUrls.length} — place on model's head, copy EXACTLY: every logo, color, pattern, print, stitching, brim shape as shown`);
-  }
-  if (shoesUrl) {
-    imageUrls.push(shoesUrl);
-    garmentRefs.push(`shoes from image ${imageUrls.length} — copy EXACTLY: same colorway, sole design, laces, brand markings, material finish`);
-  }
-  if (glassesUrl) {
-    imageUrls.push(glassesUrl);
-    garmentRefs.push(`eyewear from image ${imageUrls.length} — place on model's face, copy EXACTLY: frame color, shape, lens tint, temple design`);
-  }
-  if (glovesUrl) {
-    imageUrls.push(glovesUrl);
-    garmentRefs.push(`gloves from image ${imageUrls.length} — place on model's hands only, copy EXACTLY: color, material, cut, any logos or details, do not affect any other garment`);
-  }
-
-  // Доп. углы одежды — только как reference для FLUX (не для FASHN)
-  if (extraReferenceUrls) {
-    for (const url of extraReferenceUrls) {
-      imageUrls.push(url);
-      garmentRefs.push(`additional garment angle from image ${imageUrls.length}`);
-    }
-  }
-
-  // Стиль-референсы с описанием пользователя
-  const styleRefPromptParts: string[] = [];
   if (styleReferences) {
     for (const ref of styleReferences) {
       if (ref.uploadedUrl && ref.description) {
         imageUrls.push(ref.uploadedUrl);
-        styleRefPromptParts.push(`From image ${imageUrls.length}: ${ref.description}`);
+        stylePromptParts.push(`Image ${imageUrls.length} (style reference): ${ref.description}`);
       }
     }
   }
@@ -231,14 +191,9 @@ export async function finalizeScene(
         WEATHER_PROMPTS[background.weather],
       ].join(", ");
 
-  const garmentPart =
-    garmentRefs.length > 0
-      ? ` CRITICAL — reproduce accessories with photographic exactness from reference images: ${garmentRefs.join("; ")}. DO NOT simplify, generalize or improvise any accessory detail. Every logo, print, color, texture must match the reference exactly.`
-      : "";
-
   const posePart = pose && pose !== "standing"
     ? ` The model is ${POSE_PROMPTS[pose]}.`
-    : ` The model stands naturally in this setting.`;
+    : "";
 
   const accessoryPart = accessory && accessory !== "none"
     ? ` The model is ${ACCESSORY_PROMPTS[accessory]}.`
@@ -248,27 +203,25 @@ export async function finalizeScene(
     ? ` Scene includes: ${SCENE_PROP_PROMPTS[background.sceneProp]}.`
     : "";
 
-  const styleRefPart = styleRefPromptParts.length > 0
-    ? ` Style references: ${styleRefPromptParts.join(". ")}.`
-    : "";
-
   const prompt =
-    `Take the fashion model exactly from image 1 — preserve the person and all clothing details precisely.` +
-    garmentPart +
-    ` Replace the background with: ${sceneDesc}.` +
+    `Keep the person from image 1 — face, body, and ALL clothing — 100% identical. ` +
+    `Do not alter any clothing color, pattern, texture, or fit. ` +
+    `Replace only the background with: ${sceneDesc}.` +
     posePart +
     accessoryPart +
     scenePropPart +
-    styleRefPart +
-    ` Matching realistic lighting and shadows.` +
-    ` Professional fashion editorial photography, Vogue magazine quality, 85mm lens, shallow depth of field, 8k, photorealistic.`;
+    (stylePromptParts.length > 0 ? ` Style references: ${stylePromptParts.join(". ")}.` : "") +
+    ` Adapt lighting and shadows to match the new scene. ` +
+    `Professional fashion editorial photography, 85mm lens, 8k photorealistic.`;
 
-  const result = await fal.run("fal-ai/flux-2-pro/edit", {
+  const result = await fal.run("fal-ai/flux-pro/kontext/multi", {
     input: {
-      prompt,
       image_urls: imageUrls,
+      prompt,
       image_size: "portrait_4_3",
-      safety_tolerance: "4",
+      num_inference_steps: 40,
+      guidance_scale: 2.5,
+      safety_tolerance: "6",
       output_format: "jpeg",
     },
   }) as { data: { images: Array<{ url: string }> } };
@@ -291,8 +244,8 @@ export async function fixAccessoryWithKontext(
       image_urls: [imageUrl, referenceUrl],
       prompt,
       image_size: "portrait_4_3",
-      num_inference_steps: 50,
-      guidance_scale: 3.5,
+      num_inference_steps: 40,
+      guidance_scale: 6,  // было 3.5 — выше = точнее воспроизводит reference
       safety_tolerance: "6",
       output_format: "jpeg",
     },
