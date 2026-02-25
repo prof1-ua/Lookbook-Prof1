@@ -4,6 +4,8 @@ import {
   generateBaseModel,
   applyFashnTryOn,
   finalizeScene,
+  getAccessoryMask,
+  inpaintAccessory,
   upscaleImage,
 } from "@/lib/fal";
 import type { LookbookRequest, ClothingSlot } from "@/types/lookbook";
@@ -85,8 +87,58 @@ export async function POST(req: NextRequest) {
       styleReferences
     );
 
+    // ── Шаг 4.5: Inpainting аксессуаров (SAM2 маска → Flux Kontext) ──────────
+    // Для каждого аксессуара: находим регион через EVF-SAM2, затем перерисовываем
+    // точно по reference-фото через Flux Kontext. Остальная часть изображения
+    // не изменяется. При ошибке — тихо пропускаем, берём предыдущий результат.
+    let postProcessedUrl = finalizedUrl;
+
+    const accessoryInpaints: Array<{
+      url: string;
+      segmentPrompt: string;
+      inpaintPrompt: string;
+    }> = [
+      cleanedImages.hat && {
+        url: cleanedImages.hat,
+        segmentPrompt: "hat cap headwear on head",
+        inpaintPrompt:
+          "hat from the reference image — exact same design: all logos, colors, stitching, brim shape, photorealistic, seamlessly integrated",
+      },
+      cleanedImages.glasses && {
+        url: cleanedImages.glasses,
+        segmentPrompt: "eyeglasses sunglasses on face",
+        inpaintPrompt:
+          "eyewear from the reference image — exact same frame color, shape, lens tint, temple design, photorealistic, naturally worn",
+      },
+      cleanedImages.gloves && {
+        url: cleanedImages.gloves,
+        segmentPrompt: "gloves on both hands",
+        inpaintPrompt:
+          "gloves from the reference image — exact same color, material, cut, logos, photorealistic, fitted on hands",
+      },
+    ].filter(Boolean) as Array<{
+      url: string;
+      segmentPrompt: string;
+      inpaintPrompt: string;
+    }>;
+
+    for (const acc of accessoryInpaints) {
+      try {
+        const maskUrl = await getAccessoryMask(postProcessedUrl, acc.segmentPrompt);
+        postProcessedUrl = await inpaintAccessory(
+          postProcessedUrl,
+          maskUrl,
+          acc.url,
+          acc.inpaintPrompt
+        );
+      } catch (err) {
+        console.error(`[inpaint-accessory] ${acc.segmentPrompt}:`, err);
+        // Fallback — берём предыдущий результат без изменений
+      }
+    }
+
     // ── Шаг 5: Апскейл ────────────────────────────────────────────────────────
-    const resultUrl = await upscaleImage(finalizedUrl);
+    const resultUrl = await upscaleImage(postProcessedUrl);
 
     return NextResponse.json({ resultUrl });
   } catch (err) {

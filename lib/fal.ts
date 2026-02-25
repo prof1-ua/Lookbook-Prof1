@@ -276,6 +276,47 @@ export async function finalizeScene(
   return result.data.images[0].url;
 }
 
+// ─── Шаг 4.5: Точечный inpainting аксессуаров (SAM2 маска + Flux Kontext) ─────
+// Для 100% точности: шляпа, очки, перчатки — сначала сегментируем регион,
+// затем перерисовываем его с reference-фото через Flux Kontext Inpainting.
+
+export async function getAccessoryMask(
+  imageUrl: string,
+  segmentPrompt: string
+): Promise<string> {
+  const result = await fal.run("fal-ai/evf-sam", {
+    input: {
+      image_url: imageUrl,
+      prompt: segmentPrompt,
+      mask_only: true,
+      expand_mask: 8,
+      blur_mask: 2,
+    },
+  }) as { data: { image: { url: string } } };
+  return result.data.image.url;
+}
+
+export async function inpaintAccessory(
+  imageUrl: string,
+  maskUrl: string,
+  referenceImageUrl: string,
+  prompt: string
+): Promise<string> {
+  const result = await fal.run("fal-ai/flux-kontext-lora/inpaint", {
+    input: {
+      image_url: imageUrl,
+      mask_url: maskUrl,
+      reference_image_url: referenceImageUrl,
+      prompt,
+      num_inference_steps: 30,
+      guidance_scale: 2.5,
+      strength: 0.85,
+      output_format: "jpeg",
+    },
+  }) as { data: { images: Array<{ url: string }> } };
+  return result.data.images[0].url;
+}
+
 // ─── Шаг 5: Апскейл ──────────────────────────────────────────────────────────
 
 export async function upscaleImage(imageUrl: string): Promise<string> {
