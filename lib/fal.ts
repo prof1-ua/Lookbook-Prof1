@@ -276,41 +276,24 @@ export async function finalizeScene(
   return result.data.images[0].url;
 }
 
-// ─── Шаг 4.5: Точечный inpainting аксессуаров (SAM2 маска + Flux Kontext) ─────
-// Для 100% точности: шляпа, очки, перчатки — сначала сегментируем регион,
-// затем перерисовываем его с reference-фото через Flux Kontext Inpainting.
+// ─── Шаг 4.5: Точная замена аксессуаров через Flux Kontext Multi ──────────────
+// Передаём [готовое фото, reference-фото аксессуара] и просим заменить только
+// аксессуар. Kontext Multi видит оба изображения и редактирует точечно —
+// без маски, без риска bleeding текстуры на соседние области.
 
-export async function getAccessoryMask(
+export async function fixAccessoryWithKontext(
   imageUrl: string,
-  segmentPrompt: string
-): Promise<string> {
-  const result = await fal.run("fal-ai/evf-sam", {
-    input: {
-      image_url: imageUrl,
-      prompt: segmentPrompt,
-      mask_only: true,
-      expand_mask: 2,
-      blur_mask: 0,
-    },
-  }) as { data: { image: { url: string } } };
-  return result.data.image.url;
-}
-
-export async function inpaintAccessory(
-  imageUrl: string,
-  maskUrl: string,
-  referenceImageUrl: string,
+  referenceUrl: string,
   prompt: string
 ): Promise<string> {
-  const result = await fal.run("fal-ai/flux-kontext-lora/inpaint", {
+  const result = await fal.run("fal-ai/flux-pro/kontext/multi", {
     input: {
-      image_url: imageUrl,
-      mask_url: maskUrl,
-      reference_image_url: referenceImageUrl,
+      image_urls: [imageUrl, referenceUrl],
       prompt,
-      num_inference_steps: 30,
-      guidance_scale: 2.5,
-      strength: 0.65,
+      image_size: "portrait_4_3",
+      num_inference_steps: 50,
+      guidance_scale: 3.5,
+      safety_tolerance: "6",
       output_format: "jpeg",
     },
   }) as { data: { images: Array<{ url: string }> } };

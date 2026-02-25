@@ -4,8 +4,7 @@ import {
   generateBaseModel,
   applyFashnTryOn,
   finalizeScene,
-  getAccessoryMask,
-  inpaintAccessory,
+  fixAccessoryWithKontext,
   upscaleImage,
 } from "@/lib/fal";
 import type { LookbookRequest, ClothingSlot } from "@/types/lookbook";
@@ -87,48 +86,38 @@ export async function POST(req: NextRequest) {
       styleReferences
     );
 
-    // ── Шаг 4.5: Inpainting аксессуаров (SAM2 маска → Flux Kontext) ──────────
-    // Для каждого аксессуара: находим регион через EVF-SAM2, затем перерисовываем
-    // точно по reference-фото через Flux Kontext. Остальная часть изображения
-    // не изменяется. При ошибке — тихо пропускаем, берём предыдущий результат.
+    // ── Шаг 4.5: Точная замена аксессуаров через Flux Kontext Multi ──────────
+    // Передаём [готовое фото + reference аксессуара], Kontext заменяет только
+    // нужный элемент без маски и без риска bleeding на соседние области.
     let postProcessedUrl = finalizedUrl;
 
-    const accessoryInpaints: Array<{
-      url: string;
-      segmentPrompt: string;
-      inpaintPrompt: string;
-    }> = [
+    const accessoryFixes: Array<{ url: string; prompt: string }> = [
       cleanedImages.hat && {
         url: cleanedImages.hat,
-        segmentPrompt: "hat cap headwear on head",
-        inpaintPrompt:
-          "hat from the reference image — exact same design: all logos, colors, stitching, brim shape, photorealistic, seamlessly integrated",
+        prompt:
+          "In the first image, replace the headwear with the exact hat/cap shown in the second image — copy every detail: colors, logos, print, brim shape, stitching. Keep the face, body, all clothing, pose, lighting, and background exactly as in the first image.",
       },
       cleanedImages.glasses && {
         url: cleanedImages.glasses,
-        segmentPrompt: "eyeglasses sunglasses on face",
-        inpaintPrompt:
-          "eyewear from the reference image — exact same frame color, shape, lens tint, temple design, photorealistic, naturally worn",
+        prompt:
+          "In the first image, replace the eyewear with the exact glasses shown in the second image — copy frame color, shape, lens tint, temple design precisely. Preserve everything else: face, clothing, pose, background.",
       },
-      // Перчатки исключены из inpainting — маска рук захватывает рукава рубашки,
-      // что вызывает перенос текстуры на одежду. Остаются FLUX reference-only.
-    ].filter(Boolean) as Array<{
-      url: string;
-      segmentPrompt: string;
-      inpaintPrompt: string;
-    }>;
+      cleanedImages.gloves && {
+        url: cleanedImages.gloves,
+        prompt:
+          "In the first image, replace the gloves on the hands with the exact gloves shown in the second image — copy color, material, cut, any logos exactly. Preserve the rest of the image unchanged.",
+      },
+    ].filter(Boolean) as Array<{ url: string; prompt: string }>;
 
-    for (const acc of accessoryInpaints) {
+    for (const fix of accessoryFixes) {
       try {
-        const maskUrl = await getAccessoryMask(postProcessedUrl, acc.segmentPrompt);
-        postProcessedUrl = await inpaintAccessory(
+        postProcessedUrl = await fixAccessoryWithKontext(
           postProcessedUrl,
-          maskUrl,
-          acc.url,
-          acc.inpaintPrompt
+          fix.url,
+          fix.prompt
         );
       } catch (err) {
-        console.error(`[inpaint-accessory] ${acc.segmentPrompt}:`, err);
+        console.error("[kontext-accessory-fix]", err);
         // Fallback — берём предыдущий результат без изменений
       }
     }
