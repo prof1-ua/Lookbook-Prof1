@@ -364,7 +364,7 @@ export async function generateWithLoRAs(
     "sharp focus, 8k",
   ].join(", ");
 
-  const result = await fal.run("fal-ai/flux/dev/lora", {
+  const result = await fal.run("fal-ai/flux-lora", {
     input: {
       prompt,
       loras: loraItems.map((item) => ({ path: item.loraUrl, scale: loraScale })),
