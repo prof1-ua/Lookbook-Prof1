@@ -203,7 +203,7 @@ export default function GeneratePage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Generation failed");
+        throw new Error(data.details || data.error || "Generation failed");
       }
 
       const { resultUrl: url } = await res.json();
