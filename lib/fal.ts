@@ -295,16 +295,12 @@ export async function submitLoRATraining(
   const zipFile = new File([zipBlob], "training_images.zip", { type: "application/zip" });
   const zipUrl = await fal.storage.upload(zipFile);
 
-  const { request_id } = await fal.queue.submit("fal-ai/flux/dev/lora/training", {
+  const { request_id } = await fal.queue.submit("fal-ai/flux-lora-fast-training", {
     input: {
       images_data_url: zipUrl,
       trigger_word: triggerWord,
-      steps: 500,
-      lora_rank: 16,
-      learning_rate: 0.0001,
-      batch_size: 1,
-      resolution: "512,768,1024",
-      autocaption: true,
+      steps: 1000,
+      create_masks: true,
     },
   });
 
@@ -316,7 +312,7 @@ export async function submitLoRATraining(
 export async function getLoRATrainingResult(
   requestId: string
 ): Promise<{ status: "training" | "done" | "failed"; loraUrl?: string }> {
-  const status = await fal.queue.status("fal-ai/flux/dev/lora/training", {
+  const status = await fal.queue.status("fal-ai/flux-lora-fast-training", {
     requestId,
     logs: false,
   });
@@ -324,7 +320,7 @@ export async function getLoRATrainingResult(
   const statusStr = (status.status as string).toUpperCase();
 
   if (statusStr === "COMPLETED") {
-    const result = await fal.queue.result("fal-ai/flux/dev/lora/training", {
+    const result = await fal.queue.result("fal-ai/flux-lora-fast-training", {
       requestId,
     }) as { data: { diffusers_lora_file?: { url: string }; lora?: { url: string } } };
     const loraUrl =
