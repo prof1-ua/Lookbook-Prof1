@@ -299,7 +299,7 @@ export async function submitLoRATraining(
     input: {
       images_data_url: zipUrl,
       trigger_word: triggerWord,
-      steps: 1000,
+      steps: 500,
       lora_rank: 16,
       learning_rate: 0.0001,
       batch_size: 1,
