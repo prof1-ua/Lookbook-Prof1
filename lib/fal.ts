@@ -321,7 +321,9 @@ export async function getLoRATrainingResult(
     logs: false,
   });
 
-  if (status.status === "COMPLETED") {
+  const statusStr = (status.status as string).toUpperCase();
+
+  if (statusStr === "COMPLETED") {
     const result = await fal.queue.result("fal-ai/flux/dev/lora/training", {
       requestId,
     }) as { data: { diffusers_lora_file?: { url: string }; lora?: { url: string } } };
@@ -329,6 +331,10 @@ export async function getLoRATrainingResult(
       result.data?.diffusers_lora_file?.url ?? result.data?.lora?.url;
     if (!loraUrl) throw new Error("LoRA URL not found in result");
     return { status: "done", loraUrl };
+  }
+
+  if (statusStr === "FAILED" || statusStr === "CANCELLED") {
+    return { status: "failed" };
   }
 
   // IN_QUEUE | IN_PROGRESS → ещё тренируется
