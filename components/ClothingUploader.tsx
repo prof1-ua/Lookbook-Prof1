@@ -274,8 +274,9 @@ export function ClothingUploader({ clothing, onChange, onTrain }: Props) {
           ...(extraUploadedUrls.length > 0 ? { extraUploadedUrls } : {}),
         });
       }
-    } catch {
-      // Upload failed
+    } catch (err) {
+      console.error("[upload]", err);
+      onChange(slot, { slot, originalUrl, uploadError: true });
     }
   }
 

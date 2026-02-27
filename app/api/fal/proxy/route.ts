@@ -45,3 +45,5 @@ async function proxyRequest(req: NextRequest): Promise<NextResponse> {
 export const GET = proxyRequest;
 export const POST = proxyRequest;
 export const PUT = proxyRequest;
+
+export const maxDuration = 60;

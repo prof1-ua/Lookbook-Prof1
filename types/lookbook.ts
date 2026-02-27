@@ -20,6 +20,8 @@ export interface ClothingItem {
   loraStatus?: "idle" | "training" | "ready" | "error";
   /** FAL queue request ID for polling */
   loraRequestId?: string;
+  /** Set when FAL storage upload failed */
+  uploadError?: boolean;
 }
 
 // ─── Model Parameters ──────────────────────────────────────────────────────────
